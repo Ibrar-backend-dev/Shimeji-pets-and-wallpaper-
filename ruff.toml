@@ -1,0 +1,30 @@
+target-version = "py312"
+line-length = 96
+exclude = [".venv", "*/migrations/*", "staticfiles"]
+
+[lint]
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # pyflakes
+    "I",         # isort
+    "B",         # bugbear
+    "C4",        # comprehensions
+    "UP",        # pyupgrade
+    "DJ",        # flake8-django
+    "S",         # bandit
+    "RUF",
+]
+ignore = [
+    "S101",    # assert: the test suite is built on it
+    "B008",    # function call in default arg: standard DRF/Django idiom
+    "RUF012",  # mutable class attrs: Django Meta and DRF lists are conventional
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["S105", "S106", "S311"]          # test-only secrets and randomness
+"config/settings/test.py" = ["S105"]          # ditto: fixed test-only values
+"apps/catalog/admin.py" = ["RUF001"]          # "1080×2160" uses a real multiplication sign
+"config/settings/*" = ["F403", "F405"]        # star-import is the settings idiom
+
+[lint.isort]
+known-first-party = ["apps", "config"]

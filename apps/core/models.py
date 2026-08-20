@@ -80,10 +80,9 @@ class AuditLog(models.Model):
         ordering = ("-created_at", "-id")
         indexes = [
             models.Index(fields=["action", "-created_at"], name="audit_action_created_idx"),
-            models.Index(
-                fields=["object_type", "object_id"], name="audit_object_idx"
-            ),
+            models.Index(fields=["object_type", "object_id"], name="audit_object_idx"),
         ]
 
     def __str__(self) -> str:
-        return f"{self.action} {self.object_type}:{self.object_id} by {self.actor_label or 'system'}"
+        actor = self.actor_label or "system"
+        return f"{self.action} {self.object_type}:{self.object_id} by {actor}"

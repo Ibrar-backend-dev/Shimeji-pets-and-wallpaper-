@@ -20,7 +20,9 @@ from .models import TicketKind
 class PresignFileSerializer(serializers.Serializer):
     """One file in a presign batch."""
 
-    filename = serializers.CharField(max_length=255, allow_blank=True, required=False, default="")
+    filename = serializers.CharField(
+        max_length=255, allow_blank=True, required=False, default=""
+    )
     content_type = serializers.CharField(max_length=100)
     size = serializers.IntegerField(min_value=1)
     kind = serializers.ChoiceField(
@@ -57,19 +59,18 @@ class PresignRequestSerializer(serializers.Serializer):
                 {"type": f"Unknown or inactive content type '{attrs['type']}'."}
             )
 
-        category = Category.objects.filter(
-            pk=attrs["category_id"], is_active=True
-        ).select_related("feature").first()
+        category = (
+            Category.objects.filter(pk=attrs["category_id"], is_active=True)
+            .select_related("feature")
+            .first()
+        )
         if category is None:
-            raise serializers.ValidationError(
-                {"category_id": "Unknown or inactive category."}
-            )
+            raise serializers.ValidationError({"category_id": "Unknown or inactive category."})
         if category.feature_id != feature.id:
             raise serializers.ValidationError(
                 {
                     "category_id": (
-                        f"Category belongs to '{category.feature.slug}', "
-                        f"not '{feature.slug}'."
+                        f"Category belongs to '{category.feature.slug}', not '{feature.slug}'."
                     )
                 }
             )
@@ -89,8 +90,7 @@ class PresignRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     {
                         "subcategory_id": (
-                            "Subcategory belongs to a different category than the "
-                            "one supplied."
+                            "Subcategory belongs to a different category than the one supplied."
                         )
                     }
                 )
@@ -161,16 +161,22 @@ class MediaItemUpdateSerializer(serializers.ModelSerializer):
     the bytes in the bucket, so they are simply not in `fields`.
     """
 
-    tags = serializers.ListField(
-        child=serializers.SlugField(max_length=64), required=False
-    )
+    tags = serializers.ListField(child=serializers.SlugField(max_length=64), required=False)
     subcategory_id = serializers.UUIDField(required=False, allow_null=True)
 
     class Meta:
         model = MediaItem
-        fields = ("name", "premium", "priority", "is_live", "is_active", "tags", "subcategory_id")
+        fields = (
+            "name",
+            "premium",
+            "priority",
+            "is_live",
+            "is_active",
+            "tags",
+            "subcategory_id",
+        )
 
-    def validate_subcategory_id(self, value):  # noqa: ANN001, ANN201
+    def validate_subcategory_id(self, value):
         if value is None:
             return None
         subcategory = Subcategory.objects.filter(pk=value, is_active=True).first()

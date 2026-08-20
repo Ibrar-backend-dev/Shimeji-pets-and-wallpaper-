@@ -71,7 +71,7 @@ class UploadTicket(TimeStampedModel):
     def is_expired(self) -> bool:
         return timezone.now() > self.expires_at
 
-    def is_redeemable_by(self, user) -> bool:  # noqa: ANN001
+    def is_redeemable_by(self, user) -> bool:
         """
         A ticket may be committed once, before it expires, by whoever created it.
 

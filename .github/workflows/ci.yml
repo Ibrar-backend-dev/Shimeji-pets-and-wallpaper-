@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Lets the same workflow double as the cron driver — see DEPLOY.md.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Check for missing migrations
+        # A model change without its migration passes tests locally and breaks
+        # on deploy, so it fails here instead.
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests against SQLite
+        run: pytest -q --cov=apps --cov-report=term-missing
+
+      - name: Run tests against Postgres
+        # The real target. Postgres-only behaviour — the composite FK in
+        # migration 0003, partial index support — is only exercised here.
+        env:
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+        run: pytest -q
+
+      - name: Verify migrations apply to an empty Postgres database
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+          DJANGO_DEBUG: "False"
+          DJANGO_SECRET_KEY: ci-only-not-a-secret
+          DJANGO_ALLOWED_HOSTS: localhost
+        run: |
+          python manage.py migrate --noinput
+          python manage.py check --deploy --fail-level ERROR || true
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image
+        run: docker build -t shimeji-backend:ci .

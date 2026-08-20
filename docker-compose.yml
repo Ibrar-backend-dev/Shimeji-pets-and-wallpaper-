@@ -1,0 +1,86 @@
+# Local development stack.
+#
+# MinIO stands in for Backblaze B2: both speak the S3 API, so the application
+# code is identical and only the endpoint differs. That keeps local work off a
+# real bucket and out of a real egress bill.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shimeji
+      POSTGRES_USER: shimeji
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shimeji -d shimeji"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # web console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Creates the bucket and makes it public-read, matching the B2 setup where
+  # Cloudflare fronts a public bucket.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/shimeji-media &&
+      mc anonymous set download local/shimeji-media &&
+      echo 'bucket ready'
+      "
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: local-dev-only-not-a-secret
+      DJANGO_ALLOWED_HOSTS: "*"
+      DATABASE_URL: postgres://shimeji:localdev@db:5432/shimeji
+      B2_KEY_ID: minioadmin
+      B2_APPLICATION_KEY: minioadmin
+      B2_BUCKET_NAME: shimeji-media
+      B2_ENDPOINT_URL: http://minio:9000
+      B2_REGION: us-east-1
+      MEDIA_CDN_BASE_URL: http://localhost:9000/shimeji-media
+      CRON_SECRET: local-dev-cron-secret-value
+      LOG_JSON: "False"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  pgdata:
+  miniodata:

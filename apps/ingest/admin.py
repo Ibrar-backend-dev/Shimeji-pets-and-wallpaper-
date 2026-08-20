@@ -16,16 +16,26 @@ from .models import UploadTicket
 
 @admin.register(UploadTicket)
 class UploadTicketAdmin(admin.ModelAdmin):
-    list_display = ("object_key", "kind", "status", "feature", "category", "declared_mime",
-                    "declared_bytes", "created_by", "expires_at", "created_at")
+    list_display = (
+        "object_key",
+        "kind",
+        "status",
+        "feature",
+        "category",
+        "declared_mime",
+        "declared_bytes",
+        "created_by",
+        "expires_at",
+        "created_at",
+    )
     list_filter = ("status", "kind", "feature")
     list_select_related = ("feature", "category", "created_by")
     search_fields = ("object_key", "declared_name", "id")
     date_hierarchy = "created_at"
     ordering = ("-created_at",)
 
-    def has_add_permission(self, request) -> bool:  # noqa: ANN001
+    def has_add_permission(self, request) -> bool:
         return False
 
-    def has_change_permission(self, request, obj=None) -> bool:  # noqa: ANN001
+    def has_change_permission(self, request, obj=None) -> bool:
         return False

@@ -52,7 +52,7 @@ def build_envelope(
 class EnvelopeJSONRenderer(JSONRenderer):
     """Wrap whatever the view returned in the standard envelope."""
 
-    def render(self, data, accepted_media_type=None, renderer_context=None):  # noqa: ANN001
+    def render(self, data, accepted_media_type=None, renderer_context=None):
         renderer_context = renderer_context or {}
         response = renderer_context.get("response")
 

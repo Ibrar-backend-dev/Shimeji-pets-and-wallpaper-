@@ -21,7 +21,7 @@ from . import maintenance
 from .maintenance import DEFAULT_BATCH_LIMIT
 
 
-def _bounded_limit(request, default: int = DEFAULT_BATCH_LIMIT) -> int:  # noqa: ANN001
+def _bounded_limit(request, default: int = DEFAULT_BATCH_LIMIT) -> int:
     """Allow a caller to lower the batch size, never to raise it past the cap."""
     raw = request.query_params.get("limit")
     if not raw:
@@ -44,7 +44,7 @@ class ReapOrphansView(CronView):
 
     success_message = "Orphan reap complete"
 
-    def post(self, request):  # noqa: ANN001, ANN201
+    def post(self, request):
         stats = maintenance.reap_orphans(
             batch_limit=_bounded_limit(request),
             request=request,
@@ -58,7 +58,7 @@ class ReconcileCountsView(CronView):
 
     success_message = "Count reconcile complete"
 
-    def post(self, request):  # noqa: ANN001, ANN201
+    def post(self, request):
         stats = maintenance.reconcile_counts(
             request=request,
             dry_run=request.query_params.get("dry_run") in {"1", "true", "yes"},

@@ -38,7 +38,7 @@ class _CDNUrlField(serializers.Field):
         kwargs.setdefault("source", "*")
         super().__init__(**kwargs)
 
-    def to_representation(self, instance) -> str:  # noqa: ANN001
+    def to_representation(self, instance) -> str:
         return public_url(getattr(instance, self.key_attr, "") or "")
 
 

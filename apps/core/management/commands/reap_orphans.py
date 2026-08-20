@@ -8,7 +8,7 @@ from apps.core.maintenance import DEFAULT_BATCH_LIMIT, reap_orphans
 class Command(BaseCommand):
     help = "Delete abandoned upload tickets and purge archived items past retention."
 
-    def add_arguments(self, parser) -> None:  # noqa: ANN001
+    def add_arguments(self, parser) -> None:
         parser.add_argument("--limit", type=int, default=DEFAULT_BATCH_LIMIT)
         parser.add_argument(
             "--dry-run",
@@ -16,7 +16,7 @@ class Command(BaseCommand):
             help="Report what would be removed without deleting anything.",
         )
 
-    def handle(self, *args, **options) -> None:  # noqa: ANN002, ANN003
+    def handle(self, *args, **options) -> None:
         stats = reap_orphans(batch_limit=options["limit"], dry_run=options["dry_run"])
         for key, value in stats.items():
             self.stdout.write(f"{key}: {value}")

@@ -8,14 +8,14 @@ from apps.core.maintenance import reconcile_counts
 class Command(BaseCommand):
     help = "Recompute denormalized item counts and has_subcategories flags."
 
-    def add_arguments(self, parser) -> None:  # noqa: ANN001
+    def add_arguments(self, parser) -> None:
         parser.add_argument(
             "--dry-run",
             action="store_true",
             help="Report drift without writing corrections.",
         )
 
-    def handle(self, *args, **options) -> None:  # noqa: ANN002, ANN003
+    def handle(self, *args, **options) -> None:
         stats = reconcile_counts(dry_run=options["dry_run"])
         for key, value in stats.items():
             self.stdout.write(f"{key}: {value}")

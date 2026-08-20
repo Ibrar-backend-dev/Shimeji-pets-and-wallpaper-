@@ -16,7 +16,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from django.core.exceptions import PermissionDenied, ValidationError as DjangoValidationError
+from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from rest_framework import exceptions as drf_exceptions
 from rest_framework import status as http_status
@@ -102,9 +103,9 @@ def envelope_exception_handler(exc: Exception, context: dict) -> Response:
 
     # Normalise the Django-native exceptions DRF does not handle by default.
     if isinstance(exc, DjangoValidationError):
-        exc = drf_exceptions.ValidationError(detail=exc.message_dict
-                                             if hasattr(exc, "message_dict")
-                                             else list(exc.messages))
+        exc = drf_exceptions.ValidationError(
+            detail=exc.message_dict if hasattr(exc, "message_dict") else list(exc.messages)
+        )
     elif isinstance(exc, Http404):
         exc = drf_exceptions.NotFound()
     elif isinstance(exc, PermissionDenied):

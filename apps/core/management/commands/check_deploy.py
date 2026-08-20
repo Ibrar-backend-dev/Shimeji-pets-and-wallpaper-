@@ -18,14 +18,14 @@ from django.db import connection
 class Command(BaseCommand):
     help = "Verify this deployment is correctly configured. Exits non-zero on failure."
 
-    def add_arguments(self, parser) -> None:  # noqa: ANN001
+    def add_arguments(self, parser) -> None:
         parser.add_argument(
             "--skip-django-checks",
             action="store_true",
             help="Only run the project-specific assertions.",
         )
 
-    def handle(self, *args, **options) -> None:  # noqa: ANN002, ANN003, C901
+    def handle(self, *args, **options) -> None:
         problems: list[str] = []
         warnings: list[str] = []
 
@@ -140,7 +140,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"check_deploy passed with {len(warnings)} warning(s)."
-            )
+            self.style.SUCCESS(f"check_deploy passed with {len(warnings)} warning(s).")
         )

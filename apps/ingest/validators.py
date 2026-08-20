@@ -283,16 +283,12 @@ def probe_zip(data: bytes, feature: Feature) -> ZipProbe:
     except zipfile.BadZipFile as exc:
         raise ValidationFailure("File is not a valid zip archive.", code="bad_zip") from exc
     except Exception as exc:
-        raise ValidationFailure(
-            "Could not read the zip directory.", code="bad_zip"
-        ) from exc
+        raise ValidationFailure("Could not read the zip directory.", code="bad_zip") from exc
 
     return _probe_zip_infos(infos, feature)
 
 
-def _probe_zip_infos(
-    infos: list[zipfile.ZipInfo], feature: Feature
-) -> ZipProbe:
+def _probe_zip_infos(infos: list[zipfile.ZipInfo], feature: Feature) -> ZipProbe:
     """Apply every archive check to an already-read central directory."""
     max_entries = settings.ZIP_MAX_ENTRIES
     if len(infos) > max_entries:
@@ -416,7 +412,7 @@ class _TailBackedFile(io.RawIOBase):
         self._pos = max(0, min(target, self._size))
         return self._pos
 
-    def read(self, size: int = -1) -> bytes:  # noqa: A002
+    def read(self, size: int = -1) -> bytes:
         start = self._pos
         end = self._size if size is None or size < 0 else min(start + size, self._size)
         length = max(0, end - start)
@@ -433,7 +429,7 @@ class _TailBackedFile(io.RawIOBase):
         # Straddles the boundary.
         return b"\x00" * (tail_start - start) + self._tail[: end - tail_start]
 
-    def readinto(self, buffer) -> int:  # noqa: ANN001
+    def readinto(self, buffer) -> int:
         data = self.read(len(buffer))
         buffer[: len(data)] = data
         return len(data)
@@ -474,9 +470,7 @@ def probe_zip_from_storage(key: str, size: int, feature: Feature) -> ZipProbe:
             continue
         return _probe_zip_infos(infos, feature)
 
-    raise last_failure or ValidationFailure(
-        "Could not read the zip directory.", code="bad_zip"
-    )
+    raise last_failure or ValidationFailure("Could not read the zip directory.", code="bad_zip")
 
 
 # --------------------------------------------------------------------------- #
@@ -544,8 +538,7 @@ def verify_stored_object(
 
     if meta.size != expected_size:
         raise ValidationFailure(
-            f"Uploaded object is {meta.size} bytes but the ticket declared "
-            f"{expected_size}.",
+            f"Uploaded object is {meta.size} bytes but the ticket declared {expected_size}.",
             code="size_mismatch",
         )
 

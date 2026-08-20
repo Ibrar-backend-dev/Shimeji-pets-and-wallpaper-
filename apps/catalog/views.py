@@ -81,7 +81,7 @@ class PublicAPIView:
             return list(available)
         return [slug for slug in available if client.may_read_feature(slug)]
 
-    def apply_cache_headers(self, response: Response, last_modified=None) -> Response:  # noqa: ANN001
+    def apply_cache_headers(self, response: Response, last_modified=None) -> Response:
         """
         Cache-Control plus a weak validator.
 
@@ -108,7 +108,11 @@ class PublicAPIView:
                 str(last_modified.timestamp() if last_modified else ""),
             ]
         )
-        response["ETag"] = quote_etag(hashlib.md5(seed.encode()).hexdigest())
+        # md5 here is a cache validator, not a security primitive: it only has to
+        # change when the inputs change. usedforsecurity=False says so, and keeps
+        # this working under a FIPS-restricted Python.
+        digest = hashlib.md5(seed.encode(), usedforsecurity=False).hexdigest()
+        response["ETag"] = quote_etag(digest)
         return response
 
 
@@ -149,7 +153,7 @@ class BaseMediaItemListView(PublicAPIView, GenericAPIView):
         )
         return result.queryset
 
-    def get(self, request, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
 
         page = self.paginate_queryset(queryset)
@@ -190,16 +194,14 @@ class MediaItemDetailView(PublicAPIView, GenericAPIView):
     feature_slug: str | None = None
     success_message = "Item fetched successfully"
 
-    def get(self, request, pk, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def get(self, request, pk, *args, **kwargs):
         item_id = parse_uuid(str(pk), "id")
         features = self.allowed_feature_slugs(
             [self.feature_slug] if self.feature_slug else None
         )
 
         item = (
-            MediaItem.objects.for_api()
-            .filter(pk=item_id, feature__slug__in=features)
-            .first()
+            MediaItem.objects.for_api().filter(pk=item_id, feature__slug__in=features).first()
         )
         if item is None:
             raise ResourceNotFound(message="Item not found.")
@@ -233,7 +235,7 @@ class RelatedItemsView(PublicAPIView, GenericAPIView):
     serializer_class = MediaItemSerializer
     success_message = "Related items fetched successfully"
 
-    def get(self, request, pk, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def get(self, request, pk, *args, **kwargs):
         item_id = parse_uuid(str(pk), "id")
         features = self.allowed_feature_slugs()
 
@@ -283,7 +285,7 @@ class CategoryListView(PublicAPIView, GenericAPIView):
             .order_by("priority", "name")
         )
 
-    def get(self, request, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
@@ -322,7 +324,7 @@ class SubcategoryListView(PublicAPIView, GenericAPIView):
             queryset = queryset.filter(category_id=category_id)
         return queryset
 
-    def get(self, request, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
@@ -348,7 +350,7 @@ class ManifestView(PublicAPIView, APIView):
 
     success_message = "Manifest fetched successfully"
 
-    def get(self, request, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def get(self, request, *args, **kwargs):
         features = self.allowed_feature_slugs()
         cache_key = "catalog:manifest:" + ",".join(sorted(features))
         ttl = getattr(settings, "API_CONFIG_CACHE_SECONDS", 120)
@@ -418,10 +420,12 @@ class ManifestView(PublicAPIView, APIView):
         ]
 
         # A stamp the client can compare to decide whether to refetch the taxonomy.
-        version_seed = "|".join(
-            f"{t['type']}:{len(t['categories'])}" for t in types
-        ) + f"|{newest_stamp}"
+        version_seed = (
+            "|".join(f"{t['type']}:{len(t['categories'])}" for t in types) + f"|{newest_stamp}"
+        )
         return {
-            "config_version": hashlib.md5(version_seed.encode()).hexdigest()[:16],
+            "config_version": hashlib.md5(
+                version_seed.encode(), usedforsecurity=False
+            ).hexdigest()[:16],
             "types": types,
         }

@@ -1,0 +1,82 @@
+# Render blueprint.
+#
+# Free-tier realities this encodes:
+#   * No release phase, so `migrate` runs in the start command. It is idempotent.
+#   * No cron jobs and no background worker, so the /internal/cron/* endpoints
+#     exist and are driven by an external scheduler. See DEPLOY.md.
+#   * The service sleeps after ~15 minutes idle; the first request afterwards
+#     takes several seconds. An uptime ping is the usual mitigation.
+services:
+  - type: web
+    name: shimeji-backend
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /healthz
+
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements/prod.txt
+      python manage.py collectstatic --noinput
+
+    startCommand: |
+      python manage.py migrate --noinput
+      gunicorn config.wsgi:application \
+        --bind 0.0.0.0:$PORT \
+        --workers ${WEB_CONCURRENCY:-2} \
+        --threads ${WEB_THREADS:-4} \
+        --worker-class gthread \
+        --timeout 30 \
+        --graceful-timeout 20 \
+        --max-requests 1000 \
+        --max-requests-jitter 100 \
+        --access-logfile - \
+        --error-logfile -
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DJANGO_DEBUG
+        value: "False"
+
+      # Generated once by Render and kept thereafter.
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+
+      # Set these in the dashboard — they are environment-specific.
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DJANGO_ADMIN_URL
+        sync: false          # move the admin off /admin/
+      - key: DATABASE_URL
+        sync: false          # Neon POOLED (-pooler) connection string
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APPLICATION_KEY
+        sync: false
+      - key: B2_BUCKET_NAME
+        sync: false
+      - key: B2_ENDPOINT_URL
+        sync: false
+      - key: B2_REGION
+        sync: false
+      - key: MEDIA_CDN_BASE_URL
+        sync: false          # Cloudflare hostname in front of the bucket
+      - key: SENTRY_DSN
+        sync: false
+
+      - key: LOG_JSON
+        value: "True"
+      - key: LOG_LEVEL
+        value: INFO
+      # Pinned to 0 on purpose: Neon's pooled endpoint is pgbouncer in
+      # transaction mode, which is incompatible with persistent connections.
+      - key: DJANGO_CONN_MAX_AGE
+        value: "0"

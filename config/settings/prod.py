@@ -8,7 +8,7 @@ start, because the breakage is silent.
 
 from django.core.exceptions import ImproperlyConfigured
 
-from .base import *  # noqa: F401,F403
+from .base import *
 from .base import CRON_SECRET, DATABASES, SECRET_KEY, env
 
 DEBUG = False

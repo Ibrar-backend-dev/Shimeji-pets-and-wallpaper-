@@ -20,7 +20,7 @@ class HasAppKey(BasePermission):
 
     message = f"A valid {API_KEY_HEADER} header is required."
 
-    def has_permission(self, request, view) -> bool:  # noqa: ANN001
+    def has_permission(self, request, view) -> bool:
         if getattr(request, "app_client", None) is not None:
             return True
         if settings.DEBUG and not getattr(settings, "REQUIRE_API_KEY_IN_DEBUG", False):
@@ -42,7 +42,7 @@ class HasCronSecret(BasePermission):
 
     message = "Invalid or missing cron secret."
 
-    def has_permission(self, request, view) -> bool:  # noqa: ANN001
+    def has_permission(self, request, view) -> bool:
         expected = getattr(settings, "CRON_SECRET", "") or ""
         if len(expected) < 8:
             return False

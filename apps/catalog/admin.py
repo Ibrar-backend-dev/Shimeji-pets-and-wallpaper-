@@ -47,7 +47,7 @@ class FeatureAdmin(admin.ModelAdmin):
                 ),
                 "description": (
                     "Enforced at presign and again at commit. allowed_mimes is a JSON "
-                    "list, e.g. [\"image/jpeg\", \"image/png\"]."
+                    'list, e.g. ["image/jpeg", "image/png"].'
                 ),
             },
         ),
@@ -253,7 +253,7 @@ class MediaItemAdmin(admin.ModelAdmin):
     )
     actions = ("action_archive", "action_mark_premium", "action_clear_premium")
 
-    def has_add_permission(self, request) -> bool:  # noqa: ANN001
+    def has_add_permission(self, request) -> bool:
         # Items must come from the ingest pipeline: a row without a validated B2
         # object behind it would serve a broken URL.
         return False
@@ -292,7 +292,7 @@ class MediaItemAdmin(admin.ModelAdmin):
         return "—"
 
     @admin.action(description="Archive selected items (bytes purged after retention)")
-    def action_archive(self, request, queryset) -> None:  # noqa: ANN001
+    def action_archive(self, request, queryset) -> None:
         from apps.ingest.services import archive_item
 
         archived = 0
@@ -307,11 +307,11 @@ class MediaItemAdmin(admin.ModelAdmin):
         )
 
     @admin.action(description="Mark selected as premium")
-    def action_mark_premium(self, request, queryset) -> None:  # noqa: ANN001
+    def action_mark_premium(self, request, queryset) -> None:
         updated = queryset.update(premium=True)
         self.message_user(request, f"Marked {updated} item(s) premium.", messages.SUCCESS)
 
     @admin.action(description="Clear premium on selected")
-    def action_clear_premium(self, request, queryset) -> None:  # noqa: ANN001
+    def action_clear_premium(self, request, queryset) -> None:
         updated = queryset.update(premium=False)
         self.message_user(request, f"Cleared premium on {updated} item(s).", messages.SUCCESS)

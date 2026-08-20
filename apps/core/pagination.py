@@ -134,7 +134,7 @@ class SkipLimitPagination(BasePagination):
 
     # -- parameter parsing ------------------------------------------------- #
 
-    def _get_limit(self, request) -> int:  # noqa: ANN001
+    def _get_limit(self, request) -> int:
         default = getattr(settings, "API_PAGE_SIZE_DEFAULT", 20)
         maximum = getattr(settings, "API_PAGE_SIZE_MAX", 100)
 
@@ -155,7 +155,7 @@ class SkipLimitPagination(BasePagination):
             )
         return limit
 
-    def _get_skip(self, request) -> int:  # noqa: ANN001
+    def _get_skip(self, request) -> int:
         raw = request.query_params.get(self.skip_query_param)
         if raw is None:
             return 0
@@ -211,7 +211,7 @@ class SkipLimitPagination(BasePagination):
 
     # -- BasePagination ---------------------------------------------------- #
 
-    def paginate_queryset(self, queryset: QuerySet, request, view=None):  # noqa: ANN001
+    def paginate_queryset(self, queryset: QuerySet, request, view=None):
         self.limit = self._get_limit(request)
         self.cursor_token = request.query_params.get(self.cursor_query_param)
 
@@ -234,7 +234,7 @@ class SkipLimitPagination(BasePagination):
 
         return self._page
 
-    def get_paginated_response(self, data) -> Response:  # noqa: ANN001
+    def get_paginated_response(self, data) -> Response:
         if self.cursor_token:
             # Cursor mode reports its own position instead of an offset.
             body = {

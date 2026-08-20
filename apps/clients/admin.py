@@ -18,15 +18,29 @@ from .models import AppClient, generate_key
 
 @admin.register(AppClient)
 class AppClientAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "key_prefix", "is_active", "scope", "rate_limit_per_min",
-                    "last_used_at")
+    list_display = (
+        "name",
+        "slug",
+        "key_prefix",
+        "is_active",
+        "scope",
+        "rate_limit_per_min",
+        "last_used_at",
+    )
     list_filter = ("is_active",)
     list_editable = ("is_active", "rate_limit_per_min")
     search_fields = ("name", "slug", "key_prefix")
     prepopulated_fields = {"slug": ("name",)}
     filter_horizontal = ("allowed_features",)
-    readonly_fields = ("id", "key_prefix", "key_hash", "last_used_at", "created_at",
-                       "updated_at", "usage_hint")
+    readonly_fields = (
+        "id",
+        "key_prefix",
+        "key_hash",
+        "last_used_at",
+        "created_at",
+        "updated_at",
+        "usage_hint",
+    )
     fieldsets = (
         (None, {"fields": ("name", "slug", "is_active")}),
         (
@@ -45,7 +59,7 @@ class AppClientAdmin(admin.ModelAdmin):
                 "fields": ("id", "key_prefix", "key_hash", "usage_hint", "last_used_at"),
                 "description": (
                     "Keys are stored hashed and cannot be recovered. To replace one, "
-                    "use: manage.py create_app_client \"<name>\" --rotate"
+                    'use: manage.py create_app_client "<name>" --rotate'
                 ),
             },
         ),
@@ -65,12 +79,13 @@ class AppClientAdmin(admin.ModelAdmin):
             '<code>curl -H "X-API-Key: {}…" .../api/v1/wallpapers</code>', obj.key_prefix
         )
 
-    def save_model(self, request, obj, form, change) -> None:  # noqa: ANN001
+    def save_model(self, request, obj, form, change) -> None:
         old_prefix = ""
         if change:
-            old_prefix = AppClient.objects.filter(pk=obj.pk).values_list(
-                "key_prefix", flat=True
-            ).first() or ""
+            old_prefix = (
+                AppClient.objects.filter(pk=obj.pk).values_list("key_prefix", flat=True).first()
+                or ""
+            )
 
         raw_key = None
         if not obj.key_hash:

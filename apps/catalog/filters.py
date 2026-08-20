@@ -13,6 +13,7 @@ break a client. Recognised parameters are validated strictly: a bad value is a
 
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass, field
 
@@ -47,9 +48,7 @@ MAX_LIST_VALUES = 20
 
 
 def _fail(param: str, message: str, detail: str | None = None) -> None:
-    raise InvalidQueryParams(
-        message=message, errors={param: [detail or message]}
-    )
+    raise InvalidQueryParams(message=message, errors={param: [detail or message]})
 
 
 def parse_bool(raw: str, param: str) -> bool:
@@ -116,7 +115,7 @@ class MediaItemFilter:
     together permit; it is resolved by the view, never taken from the client.
     """
 
-    def __init__(self, query_params, feature_slugs: list[str] | None = None) -> None:  # noqa: ANN001
+    def __init__(self, query_params, feature_slugs: list[str] | None = None) -> None:
         self.params = query_params
         self.feature_slugs = feature_slugs or []
 
@@ -168,10 +167,7 @@ class MediaItemFilter:
                 "Unknown subcategory.",
                 f"No active subcategory with id {subcategory_id}.",
             )
-        if (
-            self.feature_slugs
-            and subcategory.category.feature.slug not in self.feature_slugs
-        ):
+        if self.feature_slugs and subcategory.category.feature.slug not in self.feature_slugs:
             _fail(
                 "subcategory_id",
                 "Subcategory does not belong to this content type.",
@@ -201,9 +197,7 @@ class MediaItemFilter:
         applied[param] = values
         return qs.filter(**{f"{orm_field}__in": values})
 
-    def _filter_bool(
-        self, qs: QuerySet, applied: dict, param: str, orm_field: str
-    ) -> QuerySet:
+    def _filter_bool(self, qs: QuerySet, applied: dict, param: str, orm_field: str) -> QuerySet:
         raw = self.params.get(param)
         if raw is None or raw == "":
             return qs
@@ -241,12 +235,23 @@ class MediaItemFilter:
         raw = (self.params.get("updated_since") or "").strip()
         if not raw:
             return qs
+
         parsed = parse_datetime(raw)
+        if parsed is None:
+            # "+00:00" in a query string decodes to " 00:00", because '+' means
+            # space in a URL. Every client hits this once when it sends an
+            # unencoded ISO offset, so repair that specific shape rather than
+            # making them all learn it. Anchored to the offset position so a
+            # legitimate space-separated "2026-08-20 04:51:49" is untouched.
+            repaired = re.sub(r"\s(\d{2}:?\d{2})$", r"+\1", raw)
+            parsed = parse_datetime(repaired)
+
         if parsed is None:
             _fail(
                 "updated_since",
                 "'updated_since' must be an ISO-8601 timestamp.",
-                f"'{raw}' could not be parsed. Example: 2026-08-20T04:51:49Z",
+                f"'{raw}' could not be parsed. Example: 2026-08-20T04:51:49Z "
+                "(URL-encode a '+' offset as %2B).",
             )
         applied["updated_since"] = raw
         return qs.filter(updated_at__gt=parsed)

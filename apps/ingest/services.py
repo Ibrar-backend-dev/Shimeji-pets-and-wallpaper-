@@ -93,12 +93,12 @@ class ItemResult:
 
 def presign_uploads(
     *,
-    user,  # noqa: ANN001
+    user,
     feature: Feature,
     category: Category,
     subcategory: Subcategory | None,
     files: list[dict[str, Any]],
-    request=None,  # noqa: ANN001
+    request=None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
     Validate and presign a batch. Returns (slots, rejections).
@@ -109,9 +109,7 @@ def presign_uploads(
     slots: list[PresignedSlot] = []
     rejections: list[dict[str, Any]] = []
     tickets: list[UploadTicket] = []
-    expires_at = timezone.now() + timezone.timedelta(
-        seconds=settings.PRESIGN_EXPIRY_SECONDS
-    )
+    expires_at = timezone.now() + timezone.timedelta(seconds=settings.PRESIGN_EXPIRY_SECONDS)
 
     for index, spec in enumerate(files):
         filename = str(spec.get("filename") or "")
@@ -279,9 +277,7 @@ def _validate_preview_spec(filename: str, content_type: str, size: int) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def commit_uploads(
-    *, user, items: list[dict[str, Any]], request=None  # noqa: ANN001
-) -> list[dict[str, Any]]:
+def commit_uploads(*, user, items: list[dict[str, Any]], request=None) -> list[dict[str, Any]]:
     """Commit a batch. Each item succeeds or fails independently."""
     results: list[ItemResult] = []
 
@@ -289,9 +285,7 @@ def commit_uploads(
         try:
             item = _commit_single(user=user, spec=spec, request=request)
         except validators.ValidationFailure as exc:
-            results.append(
-                ItemResult(index=index, ok=False, error=exc.message, code=exc.code)
-            )
+            results.append(ItemResult(index=index, ok=False, error=exc.message, code=exc.code))
         except ApiError as exc:
             results.append(
                 ItemResult(index=index, ok=False, error=exc.message, code="rejected")
@@ -352,7 +346,7 @@ def commit_uploads(
     return [result.as_dict() for result in results]
 
 
-def _load_ticket(ticket_id: str, user, kind: str) -> UploadTicket:  # noqa: ANN001
+def _load_ticket(ticket_id: str, user, kind: str) -> UploadTicket:
     """
     Fetch and authorise a ticket.
 
@@ -384,7 +378,7 @@ def _load_ticket(ticket_id: str, user, kind: str) -> UploadTicket:  # noqa: ANN0
     return ticket
 
 
-def _commit_single(*, user, spec: dict[str, Any], request=None) -> MediaItem:  # noqa: ANN001
+def _commit_single(*, user, spec: dict[str, Any], request=None) -> MediaItem:
     """Validate one uploaded object and create its MediaItem."""
     asset_ticket = _load_ticket(spec.get("asset_ticket_id"), user, TicketKind.ASSET)
     feature = asset_ticket.feature
@@ -448,9 +442,7 @@ def _commit_single(*, user, spec: dict[str, Any], request=None) -> MediaItem:  #
     preview_mime = ""
 
     if spec.get("preview_ticket_id"):
-        preview_ticket = _load_ticket(
-            spec["preview_ticket_id"], user, TicketKind.PREVIEW
-        )
+        preview_ticket = _load_ticket(spec["preview_ticket_id"], user, TicketKind.PREVIEW)
         preview_meta, preview_sniffed = validators.verify_stored_object(
             key=preview_ticket.object_key,
             expected_mime=preview_ticket.declared_mime,
@@ -568,9 +560,7 @@ def _coerce_optional_int(value: Any) -> int | None:
 
 def _resolve_tags(slugs: list[str]) -> list[Tag]:
     """Map slugs onto Tag rows, creating any that do not exist yet."""
-    cleaned = {
-        str(s).strip().lower()[:64] for s in slugs if str(s).strip()
-    }
+    cleaned = {str(s).strip().lower()[:64] for s in slugs if str(s).strip()}
     if not cleaned:
         return []
     existing = {t.slug: t for t in Tag.objects.filter(slug__in=cleaned)}
@@ -609,7 +599,7 @@ def _bump_counts(item: MediaItem, delta: int) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def abort_uploads(*, user, ticket_ids: list[str], request=None) -> dict[str, Any]:  # noqa: ANN001
+def abort_uploads(*, user, ticket_ids: list[str], request=None) -> dict[str, Any]:
     """Cancel issued tickets and delete whatever bytes already reached B2."""
     aborted: list[str] = []
     skipped: list[str] = []
@@ -649,7 +639,7 @@ def abort_uploads(*, user, ticket_ids: list[str], request=None) -> dict[str, Any
 # --------------------------------------------------------------------------- #
 
 
-def archive_item(*, item: MediaItem, request=None) -> MediaItem:  # noqa: ANN001
+def archive_item(*, item: MediaItem, request=None) -> MediaItem:
     """
     Soft-delete: hide from the API now, purge bytes later.
 

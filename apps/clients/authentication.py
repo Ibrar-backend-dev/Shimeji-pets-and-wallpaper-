@@ -49,17 +49,17 @@ class ResolvedClient:
     """
 
     __slots__ = (
-        "pk",
-        "name",
-        "slug",
-        "rate_limit_per_min",
         "allowed_feature_slugs",
         "key_hash",
+        "name",
+        "pk",
+        "rate_limit_per_min",
+        "slug",
     )
 
     def __init__(
         self,
-        pk,  # noqa: ANN001
+        pk,
         name: str,
         slug: str,
         rate_limit_per_min: int,
@@ -134,7 +134,7 @@ def touch_client(resolved: ResolvedClient) -> None:
         AppClient.objects.filter(pk=resolved.pk).update(last_used_at=timezone.now())
 
 
-def resolve_from_request(request) -> ResolvedClient | None:  # noqa: ANN001
+def resolve_from_request(request) -> ResolvedClient | None:
     """
     Validate the X-API-Key header on a plain Django request.
 

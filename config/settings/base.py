@@ -240,9 +240,7 @@ ARCHIVE_RETENTION_DAYS = env.int("ARCHIVE_RETENTION_DAYS", default=30)
 
 # Zip-bomb ceilings, applied to Shimeji packs.
 ZIP_MAX_ENTRIES = env.int("ZIP_MAX_ENTRIES", default=2000)
-ZIP_MAX_UNCOMPRESSED_BYTES = env.int(
-    "ZIP_MAX_UNCOMPRESSED_BYTES", default=256 * 1024 * 1024
-)
+ZIP_MAX_UNCOMPRESSED_BYTES = env.int("ZIP_MAX_UNCOMPRESSED_BYTES", default=256 * 1024 * 1024)
 ZIP_MAX_COMPRESSION_RATIO = env.int("ZIP_MAX_COMPRESSION_RATIO", default=100)
 
 # Generated preview (thumbnail) box, in pixels. Aspect ratio is preserved.
@@ -259,9 +257,7 @@ API_LIST_CACHE_SECONDS = env.int("API_LIST_CACHE_SECONDS", default=300)
 API_COUNT_CACHE_SECONDS = env.int("API_COUNT_CACHE_SECONDS", default=60)
 API_CONFIG_CACHE_SECONDS = env.int("API_CONFIG_CACHE_SECONDS", default=120)
 # How stale AppClient.last_used_at may get. Prevents a DB write per read.
-APP_CLIENT_TOUCH_INTERVAL_SECONDS = env.int(
-    "APP_CLIENT_TOUCH_INTERVAL_SECONDS", default=600
-)
+APP_CLIENT_TOUCH_INTERVAL_SECONDS = env.int("APP_CLIENT_TOUCH_INTERVAL_SECONDS", default=600)
 
 CRON_SECRET = env("CRON_SECRET", default="")
 

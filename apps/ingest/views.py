@@ -53,7 +53,7 @@ class PresignUploadView(StaffIngestView):
 
     success_message = "Upload slots created"
 
-    def post(self, request):  # noqa: ANN001, ANN201
+    def post(self, request):
         serializer = PresignRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -99,7 +99,7 @@ class CommitUploadView(StaffIngestView):
 
     success_message = "Uploads committed"
 
-    def post(self, request):  # noqa: ANN001, ANN201
+    def post(self, request):
         serializer = CommitRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -144,7 +144,7 @@ class AbortUploadView(StaffIngestView):
 
     success_message = "Uploads aborted"
 
-    def post(self, request):  # noqa: ANN001, ANN201
+    def post(self, request):
         serializer = AbortRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -179,7 +179,7 @@ class MediaItemAdminView(GenericAPIView):
             raise ResourceNotFound(message="Item not found.")
         return item
 
-    def patch(self, request, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def patch(self, request, *args, **kwargs):
         item = self.get_object()
         serializer = self.get_serializer(item, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -198,7 +198,7 @@ class MediaItemAdminView(GenericAPIView):
         response.success_message = "Item updated successfully"
         return response
 
-    def delete(self, request, *args, **kwargs):  # noqa: ANN001, ANN201, ARG002
+    def delete(self, request, *args, **kwargs):
         item = self.get_object()
         if item.status == ItemStatus.ARCHIVED:
             response = Response({"id": str(item.id)}, status=status.HTTP_200_OK)

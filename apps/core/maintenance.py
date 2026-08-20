@@ -125,9 +125,7 @@ def reap_orphans(
 
     # Coverage note: a run that hits its batch limit has more work pending, and
     # saying so beats a caller assuming the queue is empty.
-    stats["more_pending"] = (
-        len(stale_tickets) >= batch_limit or len(purgeable) >= batch_limit
-    )
+    stats["more_pending"] = len(stale_tickets) >= batch_limit or len(purgeable) >= batch_limit
 
     if not dry_run and (stats["expired_tickets"] or stats["items_purged"]):
         audit.record(
@@ -196,14 +194,11 @@ def reconcile_counts(*, request: Any = None, dry_run: bool = False) -> dict[str,
     for category in drifted_flags:
         category.has_subcategories = category.actual
     if drifted_flags and not dry_run:
-        Category.objects.bulk_update(
-            drifted_flags, ["has_subcategories"], batch_size=500
-        )
+        Category.objects.bulk_update(drifted_flags, ["has_subcategories"], batch_size=500)
     stats["has_subcategories_fixed"] = len(drifted_flags)
 
     if not dry_run and any(
-        stats[k]
-        for k in ("categories_fixed", "subcategories_fixed", "has_subcategories_fixed")
+        stats[k] for k in ("categories_fixed", "subcategories_fixed", "has_subcategories_fixed")
     ):
         audit.record(
             "COUNTS_RECONCILE",

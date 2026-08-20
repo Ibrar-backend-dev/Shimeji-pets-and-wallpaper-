@@ -20,7 +20,7 @@ import logging
 import re
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timezone as dt_timezone
+from datetime import UTC, datetime
 
 import boto3
 from botocore.client import Config
@@ -61,7 +61,7 @@ def is_configured() -> bool:
     )
 
 
-def get_client():  # noqa: ANN201
+def get_client():
     """
     Lazily built, process-wide boto3 client.
 
@@ -144,14 +144,11 @@ def build_object_key(
     server-generated UUID. Nothing here originates from a client, so the result
     cannot escape its prefix.
     """
-    now = datetime.now(tz=dt_timezone.utc)
+    now = datetime.now(tz=UTC)
     ext = extension_for_mime(mime)
     if not _EXT_RE.match(ext):  # pragma: no cover - defensive
         ext = "bin"
-    return (
-        f"{feature_slug}/{category_slug}/{kind}/"
-        f"{now:%Y}/{now:%m}/{unique_id}.{ext}"
-    )
+    return f"{feature_slug}/{category_slug}/{kind}/{now:%Y}/{now:%m}/{unique_id}.{ext}"
 
 
 def public_url(key: str) -> str:

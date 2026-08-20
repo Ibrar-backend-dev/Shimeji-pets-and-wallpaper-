@@ -34,9 +34,9 @@ class RequestIDMiddleware:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         inbound = request.headers.get("X-Request-ID", "")
         # Keep only characters that are safe in a log field.
-        cleaned = "".join(
-            ch for ch in inbound if ch.isalnum() or ch in "-_"
-        )[:_MAX_INBOUND_ID_LEN]
+        cleaned = "".join(ch for ch in inbound if ch.isalnum() or ch in "-_")[
+            :_MAX_INBOUND_ID_LEN
+        ]
         request_id = cleaned or uuid.uuid4().hex
 
         request.request_id = request_id

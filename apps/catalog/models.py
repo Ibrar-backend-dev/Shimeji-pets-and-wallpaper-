@@ -127,7 +127,7 @@ class Feature(TimeStampedModel):
     max_pixels = models.BigIntegerField(
         default=50_000_000,
         validators=[MinValueValidator(1)],
-        help_text="Decompression-bomb ceiling: width * height must not exceed this.",
+        help_text=("Decompression-bomb ceiling: width * height must not exceed this."),
     )
     strict_zip_structure = models.BooleanField(
         default=False,
@@ -139,7 +139,9 @@ class Feature(TimeStampedModel):
 
     class Meta:
         ordering = ("priority", "name")
-        indexes = [models.Index(fields=["is_active", "priority"], name="feature_active_prio_idx")]
+        indexes = [
+            models.Index(fields=["is_active", "priority"], name="feature_active_prio_idx")
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -156,9 +158,7 @@ class Feature(TimeStampedModel):
 class Category(TimeStampedModel):
     """Admin-created grouping inside a type. PROTECT so a delete cannot cascade."""
 
-    feature = models.ForeignKey(
-        Feature, on_delete=models.PROTECT, related_name="categories"
-    )
+    feature = models.ForeignKey(Feature, on_delete=models.PROTECT, related_name="categories")
     name = models.CharField(max_length=120)
     slug = models.SlugField(max_length=120, validators=[_SLUG_VALIDATOR])
     description = models.TextField(blank=True)
@@ -430,9 +430,7 @@ class MediaItem(TimeStampedModel):
         if self.category_id:
             expected = self.category.feature_id
             if self.feature_id and self.feature_id != expected:
-                raise ValidationError(
-                    {"feature": "Type must match the category's type."}
-                )
+                raise ValidationError({"feature": "Type must match the category's type."})
 
     def save(self, *args, **kwargs):
         # Derive rather than trust: `feature` mirrors the category, and the

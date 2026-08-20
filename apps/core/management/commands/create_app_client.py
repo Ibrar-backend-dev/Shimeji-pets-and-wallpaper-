@@ -17,7 +17,7 @@ from apps.clients.models import AppClient, generate_key
 class Command(BaseCommand):
     help = "Create an API client and print its key (shown once)."
 
-    def add_arguments(self, parser) -> None:  # noqa: ANN001
+    def add_arguments(self, parser) -> None:
         parser.add_argument("name", help='Display name, e.g. "Wallpaper Android"')
         parser.add_argument(
             "--features",
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             help="Replace the key on an existing client with this slug.",
         )
 
-    def handle(self, *args, **options) -> None:  # noqa: ANN002, ANN003
+    def handle(self, *args, **options) -> None:
         name = options["name"]
         slug = slugify(name)[:64]
         if not slug:

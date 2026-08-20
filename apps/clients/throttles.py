@@ -21,13 +21,13 @@ class AppClientRateThrottle(SimpleRateThrottle):
 
     scope = "public_read"
 
-    def get_cache_key(self, request, view) -> str | None:  # noqa: ANN001
+    def get_cache_key(self, request, view) -> str | None:
         client = getattr(request, "app_client", None)
         if client is None:
             return None  # AnonBurstThrottle handles keyless traffic.
         return f"throttle:client:{client.pk}"
 
-    def allow_request(self, request, view) -> bool:  # noqa: ANN001
+    def allow_request(self, request, view) -> bool:
         client = getattr(request, "app_client", None)
         if client is None:
             return True
@@ -47,7 +47,7 @@ class AnonBurstThrottle(SimpleRateThrottle):
 
     scope = "public_read"
 
-    def get_cache_key(self, request, view) -> str | None:  # noqa: ANN001
+    def get_cache_key(self, request, view) -> str | None:
         if getattr(request, "app_client", None) is not None:
             return None  # AppClientRateThrottle owns this request.
         return self.cache_format % {
@@ -67,7 +67,7 @@ class IngestRateThrottle(SimpleRateThrottle):
 
     scope = "ingest"
 
-    def get_cache_key(self, request, view) -> str | None:  # noqa: ANN001
+    def get_cache_key(self, request, view) -> str | None:
         user = getattr(request, "user", None)
         if user is None or not getattr(user, "is_authenticated", False):
             return self.cache_format % {
