@@ -29,8 +29,15 @@ class Command(BaseCommand):
         problems: list[str] = []
         warnings: list[str] = []
 
-        if not options["skip_django_checks"]:
-            self.stdout.write("Running Django deployment checks…")
+        skip_django = options["skip_django_checks"] or settings.DEBUG
+        if settings.DEBUG and not options["skip_django_checks"]:
+            self.stdout.write(
+                "Skipping Django's --deploy checks: DEBUG is on, so they would "
+                "report only the expected local-development warnings."
+            )
+
+        if not skip_django:
+            self.stdout.write("Running Django deployment checks...")
             try:
                 call_command("check", "--deploy", "--fail-level", "ERROR")
             except SystemExit:
