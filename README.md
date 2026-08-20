@@ -108,7 +108,7 @@ Full endpoint and parameter reference: **[API.md](API.md)**.
 | `apps/catalog/` | `Feature` / `Category` / `Subcategory` / `Tag` / `MediaItem` and the public read API |
 | `apps/clients/` | `AppClient` API keys, key resolution, per-client throttling |
 | `apps/ingest/` | `UploadTicket`, B2 storage layer, upload validators, presign/commit/abort |
-| `tests/` | 198 tests; the ingest and contract files are the ones that matter most |
+| `tests/` | 254 tests; the ingest and contract files are the ones that matter most |
 
 ---
 
@@ -178,12 +178,15 @@ Health: `/healthz` is liveness and does no I/O (so it never fails on a sleeping 
 ## Tests
 
 ```bash
-pytest -q                                    # 198 tests
+pytest -q                                    # 254 tests
 pytest -q --cov=apps --cov-report=term-missing
-DATABASE_URL=postgres://… pytest -q          # exercises the Postgres-only composite FK
+TEST_DATABASE_URL=postgres://… pytest -q     # exercises the Postgres-only composite FK
 ```
 
 `moto` mocks S3 in-process, so the suite never touches a real bucket and needs no credentials.
+The test settings also **ignore `DATABASE_URL` and `REDIS_URL`** — a Postgres run is an
+explicit opt-in via `TEST_DATABASE_URL`, so a real DSN in your `.env` can never be reached
+by the suite.
 CI runs the suite against both SQLite and Postgres, checks for missing migrations, and builds
 the production image.
 

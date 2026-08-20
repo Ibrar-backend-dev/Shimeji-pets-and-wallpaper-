@@ -1,11 +1,51 @@
-"""Test settings: fast, hermetic, and never touching real B2 or Redis."""
+"""
+Test settings: fast, hermetic, and incapable of touching real infrastructure.
+
+"Hermetic" is doing real work here. `base.py` reads `.env`, so without the
+overrides below a developer who has filled in their own `DATABASE_URL` would
+have the suite create a `test_<their database>` on their **production** server,
+and one with `REDIS_URL` set would have the suite share cache state with a live
+instance. Neither is acceptable, and neither is visible from a passing run — so
+every external dependency is pinned here rather than inherited.
+"""
 
 from .base import *
-from .base import CACHES  # noqa: F401
+from .base import LOGGING, env
 
 DEBUG = False
 SECRET_KEY = "test-only-key-not-a-secret"
 ALLOWED_HOSTS = ["*", "testserver"]
+
+# --------------------------------------------------------------------------- #
+# Database — never the developer's
+# --------------------------------------------------------------------------- #
+# DATABASE_URL is deliberately ignored. Running the suite against Postgres is an
+# explicit opt-in via TEST_DATABASE_URL, which CI sets and a laptop does not, so
+# a real DSN sitting in .env can never be reached from here.
+_test_database_url = env("TEST_DATABASE_URL", default="")
+if _test_database_url:
+    DATABASES = {"default": env.db_url_config(_test_database_url)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+            "TEST": {"NAME": ":memory:"},
+        }
+    }
+
+# --------------------------------------------------------------------------- #
+# Cache — always local, never shared
+# --------------------------------------------------------------------------- #
+# Pinned rather than inherited: REDIS_URL in a developer's .env would otherwise
+# make test results depend on the state of a live cache.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "test-cache",
+        "OPTIONS": {"MAX_ENTRIES": 5000},
+    }
+}
 
 # Serve static via finders rather than a collected STATIC_ROOT: the manifest
 # storage would otherwise warn on every request that the directory is missing.
@@ -19,7 +59,9 @@ WHITENOISE_AUTOREFRESH = True
 # Cheap hasher: the suite creates users constantly and never checks crypto strength.
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-# Fake credentials so boto3 never reaches for ambient AWS config; moto intercepts.
+# --------------------------------------------------------------------------- #
+# Storage — fake credentials; moto intercepts every call
+# --------------------------------------------------------------------------- #
 B2_KEY_ID = "testing"
 B2_APPLICATION_KEY = "testing"
 B2_BUCKET_NAME = "test-bucket"
@@ -38,5 +80,8 @@ CRON_SECRET = "test-cron-secret-value"
 API_LIST_CACHE_SECONDS = 0
 API_COUNT_CACHE_SECONDS = 0
 API_CONFIG_CACHE_SECONDS = 0
+
+# Sentry must never be reachable from the suite.
+SENTRY_DSN = ""
 
 LOGGING["root"]["level"] = "CRITICAL"

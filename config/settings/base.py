@@ -9,6 +9,7 @@ import datetime
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -145,6 +146,19 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 # --------------------------------------------------------------------------- #
 _redis_url = env("REDIS_URL", default="")
 if _redis_url:
+    # Django's RedisCache imports `redis` lazily, on first cache access - which
+    # means a missing package surfaces as a 500 on a random request rather than
+    # a failure to boot. Check it here so the error arrives at startup, names
+    # the cause, and says how to fix it.
+    try:
+        import redis  # noqa: F401
+    except ImportError as exc:
+        raise ImproperlyConfigured(
+            "REDIS_URL is set but the 'redis' package is not installed. Either "
+            "install it (pip install -r requirements/base.txt) or clear "
+            "REDIS_URL to fall back to the local-memory cache."
+        ) from exc
+
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",

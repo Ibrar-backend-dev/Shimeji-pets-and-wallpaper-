@@ -14,3 +14,7 @@ Pillow>=11.0,<12.0                    # image validation + preview generation
 gunicorn>=23.0,<24.0
 whitenoise[brotli]>=6.8,<7.0          # serves Django admin static files
 structlog>=24.4,<26.0                 # JSON logs to stdout
+# Only used when REDIS_URL is set, but Django's RedisCache imports it on
+# first access rather than at startup. Shipping it unconditionally means
+# setting REDIS_URL cannot turn into a 500 on a random request.
+redis>=5.0,<7.0

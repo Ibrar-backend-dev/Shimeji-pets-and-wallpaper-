@@ -61,8 +61,12 @@ jobs:
       - name: Run tests against Postgres
         # The real target. Postgres-only behaviour — the composite FK in
         # migration 0003, partial index support — is only exercised here.
+        #
+        # TEST_DATABASE_URL, not DATABASE_URL: config/settings/test.py ignores
+        # DATABASE_URL on purpose, so a developer's real DSN in .env can never
+        # be reached by the suite. Postgres runs are an explicit opt-in.
         env:
-          DATABASE_URL: postgres://test:test@localhost:5432/test
+          TEST_DATABASE_URL: postgres://test:test@localhost:5432/test
         run: pytest -q
 
       - name: Verify migrations apply to an empty Postgres database
