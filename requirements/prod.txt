@@ -1,0 +1,3 @@
+-r base.txt
+
+sentry-sdk[django]>=2.19,<3.0         # inert unless SENTRY_DSN is set

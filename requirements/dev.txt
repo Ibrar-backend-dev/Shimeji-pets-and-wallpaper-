@@ -1,0 +1,9 @@
+-r base.txt
+
+pytest>=8.3,<9.0
+pytest-django>=4.9,<5.0
+pytest-cov>=6.0,<8.0
+factory-boy>=3.3,<4.0
+moto[s3]>=5.0,<6.0                    # in-process S3 mock, so tests never touch real B2
+ruff>=0.8,<1.0
+django-debug-toolbar>=4.4,<6.0

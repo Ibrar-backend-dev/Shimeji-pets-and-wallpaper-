@@ -1,0 +1,16 @@
+# Runtime dependencies shared by every environment.
+# Deploy target is Python 3.12; the code stays 3.11-compatible for local dev.
+
+Django>=5.2,<5.3                      # 5.2 is the current LTS
+djangorestframework>=3.16,<3.17
+django-environ>=0.12,<0.13            # 12-factor env parsing, incl. env.db()
+django-cors-headers>=4.6,<5.0
+djangorestframework-simplejwt>=5.4,<6.0
+
+psycopg[binary]>=3.2,<4.0             # Postgres driver (binary wheel: no build tools)
+boto3>=1.35,<2.0                      # B2 via its S3-compatible API
+Pillow>=11.0,<12.0                    # image validation + preview generation
+
+gunicorn>=23.0,<24.0
+whitenoise[brotli]>=6.8,<7.0          # serves Django admin static files
+structlog>=24.4,<26.0                 # JSON logs to stdout
