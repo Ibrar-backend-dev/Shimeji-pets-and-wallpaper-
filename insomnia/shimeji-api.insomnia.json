@@ -81,7 +81,7 @@
       "name": "GET Manifest",
       "method": "GET",
       "url": "{{ _.api_base_url }}/manifest",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Bootstrap taxonomy: active content types, categories, subcategories, and counts."
@@ -93,7 +93,7 @@
       "name": "GET Categories (wallpaper)",
       "method": "GET",
       "url": "{{ _.api_base_url }}/categories?type=wallpaper&limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Lists active wallpaper categories. Change type to shimeji or battery as needed."
@@ -105,7 +105,7 @@
       "name": "GET Subcategories",
       "method": "GET",
       "url": "{{ _.api_base_url }}/subcategories?category_id={{ _.category_id }}&limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Lists active subcategories for category_id. Clear category_id and use ?type=wallpaper to list a type."
@@ -117,7 +117,7 @@
       "name": "GET Wallpapers (filtered)",
       "method": "GET",
       "url": "{{ _.api_base_url }}/wallpapers?limit=20&orientation=PORTRAIT&premium=false",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Wallpaper feed. Try category_id, media_type, is_live, tags, q, resolution, ordering, or updated_since filters."
@@ -129,7 +129,7 @@
       "name": "GET Wallpaper detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/wallpapers/{{ _.item_id }}",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Returns one wallpaper. Set item_id from a wallpaper-feed result."
@@ -141,7 +141,7 @@
       "name": "GET Shimeji",
       "method": "GET",
       "url": "{{ _.api_base_url }}/shimeji?limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Paginated Shimeji feed."
@@ -153,7 +153,7 @@
       "name": "GET Shimeji detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/shimeji/{{ _.item_id }}",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Returns one Shimeji item. Set item_id from the Shimeji feed first."
@@ -165,7 +165,7 @@
       "name": "GET Battery",
       "method": "GET",
       "url": "{{ _.api_base_url }}/battery?limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Paginated battery-media feed."
@@ -177,7 +177,7 @@
       "name": "GET Battery detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/battery/{{ _.item_id }}",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Returns one battery item. Set item_id from the battery feed first."
@@ -189,7 +189,7 @@
       "name": "GET Mixed items",
       "method": "GET",
       "url": "{{ _.api_base_url }}/items?type=wallpaper,shimeji,battery&limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Combined feed across types allowed by the API key."
@@ -201,7 +201,7 @@
       "name": "GET Mixed item detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/items/{{ _.item_id }}",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Returns an allowed item regardless of its content type."
@@ -213,7 +213,7 @@
       "name": "GET Related items",
       "method": "GET",
       "url": "{{ _.api_base_url }}/items/{{ _.item_id }}/related?limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
       "body": {},
       "parameters": [],
       "description": "Returns other items in the same subcategory, or the same category where no subcategory exists."
@@ -225,7 +225,7 @@
       "name": "GET Wallpapers with ETag",
       "method": "GET",
       "url": "{{ _.api_base_url }}/wallpapers?limit=20",
-      "headers": [["X-API-Key", "{{ _.api_key }}"], ["If-None-Match", "{{ _.etag }}"]],
+      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}, {"name": "If-None-Match", "value": "{{ _.etag }}"}],
       "body": {},
       "parameters": [],
       "description": "Conditional GET. Paste the ETag returned by a feed request into etag; a 304 response means nothing changed."
@@ -244,7 +244,7 @@
       "name": "POST Create upload slot",
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/presign",
-      "headers": [["Authorization", "Bearer {{ _.staff_jwt }}"], ["Content-Type", "application/json"]],
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
       "body": {"mimeType": "application/json", "text": "{\n  \"type\": \"wallpaper\",\n  \"category_id\": \"{{ _.category_id }}\",\n  \"subcategory_id\": null,\n  \"files\": [\n    {\n      \"filename\": \"sample.png\",\n      \"content_type\": \"image/png\",\n      \"size\": 123456,\n      \"kind\": \"ASSET\"\n    }\n  ]\n}"},
       "parameters": [],
       "description": "Creates presigned B2 PUT slots. The filename, MIME type, and exact size must match the eventual upload."
@@ -256,7 +256,7 @@
       "name": "POST Commit uploaded file",
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/commit",
-      "headers": [["Authorization", "Bearer {{ _.staff_jwt }}"], ["Content-Type", "application/json"]],
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
       "body": {"mimeType": "application/json", "text": "{\n  \"items\": [\n    {\n      \"asset_ticket_id\": \"{{ _.asset_ticket_id }}\",\n      \"preview_ticket_id\": null,\n      \"name\": \"Insomnia test asset\",\n      \"premium\": false,\n      \"priority\": 0,\n      \"is_live\": null,\n      \"duration_ms\": null,\n      \"tags\": [\"test\"]\n    }\n  ]\n}"},
       "parameters": [],
       "description": "Validates the uploaded bytes and creates media items. Set asset_ticket_id only after completing the direct B2 PUT."
@@ -268,7 +268,7 @@
       "name": "POST Abort upload slots",
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/abort",
-      "headers": [["Authorization", "Bearer {{ _.staff_jwt }}"], ["Content-Type", "application/json"]],
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
       "body": {"mimeType": "application/json", "text": "{\n  \"ticket_ids\": [\"{{ _.asset_ticket_id }}\"]\n}"},
       "parameters": [],
       "description": "Cancels unused upload tickets and removes any uploaded bytes."
@@ -280,7 +280,7 @@
       "name": "PATCH Media item",
       "method": "PATCH",
       "url": "{{ _.admin_api_base_url }}/items/{{ _.item_id }}",
-      "headers": [["Authorization", "Bearer {{ _.staff_jwt }}"], ["Content-Type", "application/json"]],
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
       "body": {"mimeType": "application/json", "text": "{\n  \"name\": \"Updated by Insomnia\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_active\": true,\n  \"tags\": [\"test\"]\n}"},
       "parameters": [],
       "description": "Updates editorial fields only; storage details and computed values cannot be changed."
@@ -292,7 +292,7 @@
       "name": "DELETE Media item (archive)",
       "method": "DELETE",
       "url": "{{ _.admin_api_base_url }}/items/{{ _.item_id }}",
-      "headers": [["Authorization", "Bearer {{ _.staff_jwt }}"]],
+      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
       "body": {},
       "parameters": [],
       "description": "Archives an item (soft delete). Stored bytes are purged later by the orphan reaper."
@@ -311,7 +311,7 @@
       "name": "POST Reap orphans (dry run)",
       "method": "POST",
       "url": "{{ _.internal_base_url }}/cron/reap-orphans?dry_run=1&limit=100",
-      "headers": [["X-Cron-Secret", "{{ _.cron_secret }}"]],
+      "headers": [{"name": "X-Cron-Secret", "value": "{{ _.cron_secret }}"}],
       "body": {},
       "parameters": [],
       "description": "Reports abandoned upload tickets and expired archived media without deleting anything. Remove dry_run=1 to perform cleanup."
@@ -323,7 +323,7 @@
       "name": "POST Reconcile counts (dry run)",
       "method": "POST",
       "url": "{{ _.internal_base_url }}/cron/reconcile-counts?dry_run=1",
-      "headers": [["X-Cron-Secret", "{{ _.cron_secret }}"]],
+      "headers": [{"name": "X-Cron-Secret", "value": "{{ _.cron_secret }}"}],
       "body": {},
       "parameters": [],
       "description": "Reports category/subcategory count corrections without persisting them. Remove dry_run=1 to reconcile counts."

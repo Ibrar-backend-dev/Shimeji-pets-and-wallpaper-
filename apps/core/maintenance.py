@@ -20,7 +20,13 @@ from django.db.models import Count, Exists, OuterRef, Q
 from django.utils import timezone
 
 from apps.catalog.models import Category, ItemStatus, MediaItem, Subcategory
-from apps.ingest.models import TicketStatus, UploadTicket
+from apps.ingest.models import (
+    MultipartSessionStatus,
+    MultipartUploadSession,
+    TicketStatus,
+    UploadBatch,
+    UploadTicket,
+)
 
 from . import audit
 
@@ -57,6 +63,7 @@ def reap_orphans(
         "objects_deleted": 0,
         "objects_failed": 0,
         "items_purged": 0,
+        "multipart_sessions_aborted": 0,
         "dry_run": dry_run,
     }
 
@@ -83,6 +90,24 @@ def reap_orphans(
     if reaped_ids:
         # Deleting the rows is safe now: the keys they held have been dealt with.
         UploadTicket.objects.filter(pk__in=reaped_ids).delete()
+
+    # --- 2b: expired multipart uploads ------------------------------------ #
+    stale_sessions = list(
+        MultipartUploadSession.objects.select_related("batch")
+        .filter(status=MultipartSessionStatus.UPLOADING, batch__expires_at__lt=now)
+        .order_by("batch__expires_at")[:batch_limit]
+    )
+    for session in stale_sessions:
+        if dry_run:
+            stats["multipart_sessions_aborted"] += 1
+            continue
+        if storage.abort_multipart_upload(
+            key=session.object_key, upload_id=session.storage_upload_id
+        ):
+            session.status = MultipartSessionStatus.EXPIRED
+            session.save(update_fields=["status", "updated_at"])
+            stats["multipart_sessions_aborted"] += 1
+    UploadBatch.objects.filter(status="OPEN", expires_at__lt=now).update(status="EXPIRED")
 
     # --- 3: archived items past their retention window --------------------- #
     cutoff = now - timezone.timedelta(days=settings.ARCHIVE_RETENTION_DAYS)
@@ -125,7 +150,11 @@ def reap_orphans(
 
     # Coverage note: a run that hits its batch limit has more work pending, and
     # saying so beats a caller assuming the queue is empty.
-    stats["more_pending"] = len(stale_tickets) >= batch_limit or len(purgeable) >= batch_limit
+    stats["more_pending"] = (
+        len(stale_tickets) >= batch_limit
+        or len(stale_sessions) >= batch_limit
+        or len(purgeable) >= batch_limit
+    )
 
     if not dry_run and (stats["expired_tickets"] or stats["items_purged"]):
         audit.record(

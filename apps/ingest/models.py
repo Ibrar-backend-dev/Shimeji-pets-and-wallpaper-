@@ -30,6 +30,104 @@ class TicketStatus(models.TextChoices):
     EXPIRED = "EXPIRED", "Expired"
 
 
+class BatchPublishMode(models.TextChoices):
+    DRAFT = "DRAFT", "Draft: publish explicitly"
+    IMMEDIATE = "IMMEDIATE", "Publish when finalized"
+
+
+class BatchStatus(models.TextChoices):
+    OPEN = "OPEN", "Open"
+    COMPLETED = "COMPLETED", "Completed"
+    ABORTED = "ABORTED", "Aborted"
+    EXPIRED = "EXPIRED", "Expired"
+
+
+class MultipartSessionStatus(models.TextChoices):
+    UPLOADING = "UPLOADING", "Uploading"
+    UPLOADED = "UPLOADED", "Uploaded to storage"
+    FINALIZED = "FINALIZED", "Media item created"
+    ABORTED = "ABORTED", "Aborted"
+    EXPIRED = "EXPIRED", "Expired"
+    FAILED = "FAILED", "Validation failed"
+
+
+class UploadBatch(TimeStampedModel):
+    """Durable, staff-owned grouping for resumable v2 uploads."""
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="upload_batches"
+    )
+    feature = models.ForeignKey(
+        Feature, on_delete=models.PROTECT, related_name="upload_batches"
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name="upload_batches"
+    )
+    subcategory = models.ForeignKey(
+        Subcategory,
+        on_delete=models.PROTECT,
+        related_name="upload_batches",
+        null=True,
+        blank=True,
+    )
+    publish_mode = models.CharField(
+        max_length=10, choices=BatchPublishMode.choices, default=BatchPublishMode.DRAFT
+    )
+    status = models.CharField(
+        max_length=10, choices=BatchStatus.choices, default=BatchStatus.OPEN
+    )
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(
+                fields=["created_by", "status", "-created_at"], name="batch_owner_status_idx"
+            )
+        ]
+
+    def is_redeemable_by(self, user) -> bool:
+        return (
+            self.status == BatchStatus.OPEN
+            and timezone.now() <= self.expires_at
+            and self.created_by_id == getattr(user, "pk", None)
+        )
+
+
+class MultipartUploadSession(TimeStampedModel):
+    """One B2 multipart object, resumable while its batch remains open."""
+
+    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, related_name="sessions")
+    kind = models.CharField(max_length=8, choices=TicketKind.choices, default=TicketKind.ASSET)
+    object_key = models.CharField(max_length=512, unique=True)
+    storage_upload_id = models.CharField(max_length=512, unique=True)
+    declared_name = models.CharField(max_length=255, blank=True)
+    declared_mime = models.CharField(max_length=100)
+    declared_bytes = models.BigIntegerField()
+    part_size = models.PositiveIntegerField()
+    metadata = models.JSONField(default=dict, blank=True)
+    status = models.CharField(
+        max_length=12,
+        choices=MultipartSessionStatus.choices,
+        default=MultipartSessionStatus.UPLOADING,
+    )
+    failure_reason = models.TextField(blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("created_at",)
+        indexes = [models.Index(fields=["status", "updated_at"], name="multipart_status_idx")]
+
+    @property
+    def part_count(self) -> int:
+        return max(1, (self.declared_bytes + self.part_size - 1) // self.part_size)
+
+    def is_redeemable_by(self, user) -> bool:
+        return self.status == MultipartSessionStatus.UPLOADING and self.batch.is_redeemable_by(
+            user
+        )
+
+
 class UploadTicket(TimeStampedModel):
     """One presigned upload slot for exactly one object."""
 

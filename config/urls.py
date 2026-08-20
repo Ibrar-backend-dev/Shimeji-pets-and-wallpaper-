@@ -17,6 +17,7 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path("api/v1/", include("apps.catalog.urls")),
     path("api/v1/admin/", include("apps.ingest.urls")),
+    path("api/v2/admin/", include("apps.ingest.v2_urls")),
     path("internal/", include("apps.core.urls")),
 ]
 

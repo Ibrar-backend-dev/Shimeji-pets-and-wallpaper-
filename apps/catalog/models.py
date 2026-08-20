@@ -351,6 +351,13 @@ class MediaItem(TimeStampedModel):
     )
     is_active = models.BooleanField(default=True)
     archived_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    upload_batch = models.ForeignKey(
+        "ingest.UploadBatch",
+        on_delete=models.SET_NULL,
+        related_name="items",
+        null=True,
+        blank=True,
+    )
 
     objects = MediaItemQuerySet.as_manager()
 

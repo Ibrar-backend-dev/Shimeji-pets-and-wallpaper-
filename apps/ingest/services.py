@@ -32,7 +32,16 @@ from apps.core import audit
 from apps.core.exceptions import ApiError
 
 from . import storage, validators
-from .models import TicketKind, TicketStatus, UploadTicket
+from .models import (
+    BatchPublishMode,
+    BatchStatus,
+    MultipartSessionStatus,
+    MultipartUploadSession,
+    TicketKind,
+    TicketStatus,
+    UploadBatch,
+    UploadTicket,
+)
 
 logger = logging.getLogger("ingest.upload")
 
@@ -632,6 +641,322 @@ def abort_uploads(*, user, ticket_ids: list[str], request=None) -> dict[str, Any
             payload={"aborted": aborted, "skipped": skipped},
         )
     return {"aborted": aborted, "skipped": skipped}
+
+
+# --------------------------------------------------------------------------- #
+# Resumable multipart uploads (v2)
+# --------------------------------------------------------------------------- #
+
+
+def create_upload_batch(
+    *, user, feature_slug: str, category_id, subcategory_id, publish_mode: str
+) -> UploadBatch:
+    feature = Feature.objects.filter(slug=feature_slug, is_active=True).first()
+    category = (
+        Category.objects.select_related("feature")
+        .filter(pk=category_id, is_active=True)
+        .first()
+    )
+    if feature is None:
+        raise validators.ValidationFailure("Unknown or inactive content type.", "bad_type")
+    if category is None or category.feature_id != feature.id:
+        raise validators.ValidationFailure(
+            "Category does not belong to the selected content type.", "bad_category"
+        )
+    subcategory = None
+    if subcategory_id:
+        subcategory = Subcategory.objects.filter(pk=subcategory_id, is_active=True).first()
+        if subcategory is None or subcategory.category_id != category.id:
+            raise validators.ValidationFailure(
+                "Subcategory does not belong to the selected category.", "bad_subcategory"
+            )
+    return UploadBatch.objects.create(
+        created_by=user,
+        feature=feature,
+        category=category,
+        subcategory=subcategory,
+        publish_mode=publish_mode,
+        expires_at=timezone.now()
+        + timezone.timedelta(seconds=settings.MULTIPART_SESSION_EXPIRY_SECONDS),
+    )
+
+
+def create_multipart_session(*, batch: UploadBatch, payload: dict) -> MultipartUploadSession:
+    kind = payload["kind"]
+    filename = payload.get("filename", "")
+    mime = payload["content_type"].lower()
+    size = payload["size"]
+    if kind == TicketKind.PREVIEW:
+        _validate_preview_spec(filename, mime, size)
+    else:
+        validators.validate_declared_upload(
+            feature=batch.feature, filename=filename, content_type=mime, size=size
+        )
+    key = storage.build_object_key(
+        feature_slug=batch.feature.slug,
+        category_slug=batch.category.slug,
+        kind="previews" if kind == TicketKind.PREVIEW else "assets",
+        unique_id=uuid.uuid4().hex,
+        mime=mime,
+    )
+    upload_id = storage.create_multipart_upload(key=key, content_type=mime)
+    metadata = {
+        key: payload.get(key)
+        for key in ("name", "premium", "priority", "is_live", "duration_ms", "tags")
+    }
+    return MultipartUploadSession.objects.create(
+        batch=batch,
+        kind=kind,
+        object_key=key,
+        storage_upload_id=upload_id,
+        declared_name=filename,
+        declared_mime=mime,
+        declared_bytes=size,
+        part_size=settings.MULTIPART_PART_SIZE_BYTES,
+        metadata=metadata,
+    )
+
+
+def multipart_parts(session: MultipartUploadSession) -> list[dict]:
+    return [
+        {
+            "part_number": int(part["PartNumber"]),
+            "etag": str(part["ETag"]).strip('"'),
+            "size": int(part.get("Size", 0)),
+        }
+        for part in storage.list_multipart_parts(
+            key=session.object_key, upload_id=session.storage_upload_id
+        )
+    ]
+
+
+def multipart_part_urls(*, session: MultipartUploadSession, part_numbers: list[int]) -> dict:
+    if session.status != MultipartSessionStatus.UPLOADING:
+        raise validators.ValidationFailure(
+            "Upload session is not accepting parts.", "session_unusable"
+        )
+    invalid = [n for n in part_numbers if n > session.part_count]
+    if invalid:
+        raise validators.ValidationFailure(
+            "A requested part number is outside this file.", "bad_part"
+        )
+    existing = {part["part_number"] for part in multipart_parts(session)}
+    return {
+        "session_id": str(session.id),
+        "part_size": session.part_size,
+        "part_count": session.part_count,
+        "already_uploaded": sorted(existing),
+        "parts": [
+            {
+                "part_number": number,
+                "upload_url": storage.presign_upload_part(
+                    key=session.object_key,
+                    upload_id=session.storage_upload_id,
+                    part_number=number,
+                ),
+            }
+            for number in part_numbers
+            if number not in existing
+        ],
+    }
+
+
+def complete_multipart_session(*, session: MultipartUploadSession) -> dict:
+    if session.status == MultipartSessionStatus.UPLOADED:
+        return {"session_id": str(session.id), "status": session.status, "idempotent": True}
+    if session.status != MultipartSessionStatus.UPLOADING:
+        raise validators.ValidationFailure(
+            "Upload session cannot be completed.", "session_unusable"
+        )
+    parts = multipart_parts(session)
+    numbers = [part["part_number"] for part in parts]
+    if numbers != list(range(1, session.part_count + 1)):
+        raise validators.ValidationFailure(
+            "All upload parts must finish before completion.", "parts_missing"
+        )
+    # B2's listed ETags are authoritative; clients never tell us what to complete.
+    storage.complete_multipart_upload(
+        key=session.object_key,
+        upload_id=session.storage_upload_id,
+        parts=[{"PartNumber": part["part_number"], "ETag": part["etag"]} for part in parts],
+    )
+    session.status = MultipartSessionStatus.UPLOADED
+    session.completed_at = timezone.now()
+    session.save(update_fields=["status", "completed_at", "updated_at"])
+    return {"session_id": str(session.id), "status": session.status, "idempotent": False}
+
+
+def finalize_multipart_session(
+    *, session: MultipartUploadSession, preview_session_id=None, request=None
+) -> MediaItem:
+    """Validate an uploaded object and create a private draft or published media row."""
+    existing = MediaItem.objects.filter(file_key=session.object_key).first()
+    if existing is not None:
+        return existing
+    if session.status != MultipartSessionStatus.UPLOADED:
+        raise validators.ValidationFailure(
+            "Complete the multipart upload before finalizing it.", "not_uploaded"
+        )
+    if session.kind != TicketKind.ASSET:
+        raise validators.ValidationFailure(
+            "Only asset sessions can create media.", "wrong_session_kind"
+        )
+    batch = session.batch
+    meta, sniffed_mime = validators.verify_stored_object(
+        key=session.object_key,
+        expected_mime=session.declared_mime,
+        expected_size=session.declared_bytes,
+    )
+    media_type = validators.media_type_for_mime(sniffed_mime)
+    duplicate = (
+        MediaItem.objects.filter(file_etag=meta.etag, file_bytes=meta.size)
+        .exclude(status=ItemStatus.ARCHIVED)
+        .first()
+    )
+    if meta.etag and duplicate:
+        raise validators.ValidationFailure(
+            f"These exact bytes are already in the catalog as item {duplicate.id}.",
+            "duplicate_file",
+        )
+    probe = validators.ImageProbe()
+    zip_probe = None
+    generated_preview = None
+    if media_type in {"IMAGE", "GIF"}:
+        if meta.size <= settings.INLINE_PROCESS_MAX_BYTES:
+            data = storage.get_object_bytes(session.object_key, meta.size)
+            probe = validators.probe_image(data, batch.feature)
+            generated_preview = validators.make_preview(
+                data, settings.PREVIEW_MAX_EDGE, settings.PREVIEW_JPEG_QUALITY
+            )
+        elif not preview_session_id:
+            raise validators.ValidationFailure(
+                "Large images require a preview upload.", "preview_required"
+            )
+    elif media_type == "ZIP":
+        zip_probe = validators.probe_zip_from_storage(
+            session.object_key, meta.size, batch.feature
+        )
+    elif media_type == "VIDEO" and not preview_session_id:
+        raise validators.ValidationFailure(
+            "Video uploads require a preview upload.", "preview_required"
+        )
+    preview_key = ""
+    preview_bytes = 0
+    preview_mime = ""
+    preview_session = None
+    if preview_session_id:
+        preview_session = MultipartUploadSession.objects.filter(
+            pk=preview_session_id, batch=batch, kind=TicketKind.PREVIEW
+        ).first()
+        if preview_session is None or preview_session.status != MultipartSessionStatus.UPLOADED:
+            raise validators.ValidationFailure(
+                "Preview session is unavailable or incomplete.", "bad_preview"
+            )
+        preview_meta, preview_sniffed = validators.verify_stored_object(
+            key=preview_session.object_key,
+            expected_mime=preview_session.declared_mime,
+            expected_size=preview_session.declared_bytes,
+        )
+        if not preview_sniffed.startswith("image/"):
+            raise validators.ValidationFailure(
+                "The preview object is not an image.", "bad_preview"
+            )
+        preview_probe = validators.probe_image(
+            storage.get_object_bytes(preview_session.object_key, preview_meta.size),
+            batch.feature,
+        )
+        preview_key, preview_bytes = preview_session.object_key, preview_meta.size
+        preview_mime = preview_meta.content_type or preview_sniffed
+        if probe.width is None:
+            probe = preview_probe
+    elif generated_preview:
+        data, mime = generated_preview
+        preview_key = storage.build_object_key(
+            feature_slug=batch.feature.slug,
+            category_slug=batch.category.slug,
+            kind="previews",
+            unique_id=uuid.uuid4().hex,
+            mime=mime,
+        )
+        preview_bytes, preview_mime = (
+            storage.put_bytes(key=preview_key, data=data, content_type=mime).size,
+            mime,
+        )
+    status = (
+        ItemStatus.READY
+        if batch.publish_mode == BatchPublishMode.IMMEDIATE
+        else ItemStatus.PENDING
+    )
+    with transaction.atomic():
+        item = MediaItem(
+            upload_batch=batch,
+            feature=batch.feature,
+            category=batch.category,
+            subcategory=batch.subcategory,
+            name=str(session.metadata.get("name") or session.declared_name)[:200],
+            premium=bool(session.metadata.get("premium", False)),
+            priority=int(session.metadata.get("priority") or 0),
+            media_type=media_type,
+            is_live=_resolve_is_live(session.metadata.get("is_live"), media_type),
+            file_key=session.object_key,
+            file_bytes=meta.size,
+            file_mime=sniffed_mime,
+            file_etag=meta.etag,
+            preview_key=preview_key,
+            preview_bytes=preview_bytes,
+            preview_mime=preview_mime,
+            width=probe.width,
+            height=probe.height,
+            duration_ms=_coerce_optional_int(session.metadata.get("duration_ms")),
+            dominant_color=probe.dominant_color,
+            zip_entries=zip_probe.entries if zip_probe else None,
+            zip_has_conf=zip_probe.has_conf if zip_probe else None,
+            status=status,
+            is_active=True,
+        )
+        item.full_clean(exclude=["file_etag", "file_mime", "preview_mime"])
+        item.save()
+        item.tags.set(_resolve_tags(session.metadata.get("tags") or []))
+        session.status = MultipartSessionStatus.FINALIZED
+        session.save(update_fields=["status", "updated_at"])
+        if preview_session:
+            preview_session.status = MultipartSessionStatus.FINALIZED
+            preview_session.save(update_fields=["status", "updated_at"])
+        if status == ItemStatus.READY:
+            _bump_counts(item, 1)
+    audit.record(
+        "UPLOAD_COMMIT",
+        request=request,
+        object_type="MediaItem",
+        object_id=str(item.id),
+        payload={"batch": str(batch.id), "multipart": True},
+    )
+    return item
+
+
+def publish_batch(*, batch: UploadBatch, item_ids: list, request=None) -> dict:
+    items = batch.items.filter(status=ItemStatus.PENDING, is_active=True)
+    if item_ids:
+        items = items.filter(pk__in=item_ids)
+    published, skipped = [], []
+    for item in items:
+        item.status = ItemStatus.READY
+        item.save(update_fields=["status", "updated_at"])
+        _bump_counts(item, 1)
+        published.append(str(item.id))
+    if not batch.items.filter(status=ItemStatus.PENDING).exists():
+        batch.status = BatchStatus.COMPLETED
+        batch.save(update_fields=["status", "updated_at"])
+    return {"published": published, "skipped": skipped}
+
+
+def abort_multipart_session(session: MultipartUploadSession) -> bool:
+    if session.status in {MultipartSessionStatus.ABORTED, MultipartSessionStatus.FINALIZED}:
+        return False
+    storage.abort_multipart_upload(key=session.object_key, upload_id=session.storage_upload_id)
+    session.status = MultipartSessionStatus.ABORTED
+    session.save(update_fields=["status", "updated_at"])
+    return True
 
 
 # --------------------------------------------------------------------------- #

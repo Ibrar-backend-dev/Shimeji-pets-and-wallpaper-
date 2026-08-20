@@ -209,6 +209,73 @@ def presign_put(
     return url, {"Content-Type": content_type, "Content-Length": str(content_length)}
 
 
+def create_multipart_upload(*, key: str, content_type: str) -> str:
+    try:
+        response = get_client().create_multipart_upload(
+            Bucket=settings.B2_BUCKET_NAME, Key=key, ContentType=content_type
+        )
+        return str(response["UploadId"])
+    except (BotoCoreError, ClientError, KeyError) as exc:
+        raise StorageError("Could not start multipart upload.") from exc
+
+
+def presign_upload_part(*, key: str, upload_id: str, part_number: int) -> str:
+    try:
+        return get_client().generate_presigned_url(
+            ClientMethod="upload_part",
+            Params={
+                "Bucket": settings.B2_BUCKET_NAME,
+                "Key": key,
+                "UploadId": upload_id,
+                "PartNumber": part_number,
+            },
+            ExpiresIn=settings.PRESIGN_EXPIRY_SECONDS,
+            HttpMethod="PUT",
+        )
+    except (BotoCoreError, ClientError) as exc:
+        raise StorageError("Could not presign upload part.") from exc
+
+
+def list_multipart_parts(*, key: str, upload_id: str) -> list[dict]:
+    try:
+        paginator = get_client().get_paginator("list_parts")
+        parts: list[dict] = []
+        for page in paginator.paginate(
+            Bucket=settings.B2_BUCKET_NAME, Key=key, UploadId=upload_id
+        ):
+            parts.extend(page.get("Parts", []))
+        return parts
+    except (BotoCoreError, ClientError) as exc:
+        raise StorageError("Could not list uploaded parts.") from exc
+
+
+def complete_multipart_upload(*, key: str, upload_id: str, parts: list[dict]) -> ObjectMeta:
+    try:
+        get_client().complete_multipart_upload(
+            Bucket=settings.B2_BUCKET_NAME,
+            Key=key,
+            UploadId=upload_id,
+            MultipartUpload={"Parts": parts},
+        )
+    except (BotoCoreError, ClientError) as exc:
+        raise StorageError("Could not complete multipart upload.") from exc
+    return head_object(key)
+
+
+def abort_multipart_upload(*, key: str, upload_id: str) -> bool:
+    try:
+        get_client().abort_multipart_upload(
+            Bucket=settings.B2_BUCKET_NAME, Key=key, UploadId=upload_id
+        )
+        return True
+    except (BotoCoreError, ClientError) as exc:
+        logger.warning(
+            "Multipart abort failed",
+            extra={"event": "multipart_abort_failed", "key": key, "error": str(exc)},
+        )
+        return False
+
+
 def head_object(key: str) -> ObjectMeta:
     """Fetch object metadata. Raises ObjectNotFound if it is not there."""
     client = get_client()
