@@ -27,6 +27,9 @@ class SessionCreateSerializer(serializers.Serializer):
     priority = serializers.IntegerField(required=False, default=0)
     is_live = serializers.BooleanField(required=False, allow_null=True, default=None)
     duration_ms = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    color_code = serializers.RegexField(
+        r"^#[0-9a-fA-F]{6}$", required=False, allow_null=True, default=None
+    )
     tags = serializers.ListField(
         child=serializers.SlugField(max_length=64), required=False, default=list
     )

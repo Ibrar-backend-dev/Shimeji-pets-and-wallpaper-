@@ -703,7 +703,15 @@ def create_multipart_session(*, batch: UploadBatch, payload: dict) -> MultipartU
     upload_id = storage.create_multipart_upload(key=key, content_type=mime)
     metadata = {
         key: payload.get(key)
-        for key in ("name", "premium", "priority", "is_live", "duration_ms", "tags")
+        for key in (
+            "name",
+            "premium",
+            "priority",
+            "is_live",
+            "duration_ms",
+            "color_code",
+            "tags",
+        )
     }
     return MultipartUploadSession.objects.create(
         batch=batch,
@@ -910,6 +918,7 @@ def finalize_multipart_session(
             height=probe.height,
             duration_ms=_coerce_optional_int(session.metadata.get("duration_ms")),
             dominant_color=probe.dominant_color,
+            color_code=session.metadata.get("color_code"),
             zip_entries=zip_probe.entries if zip_probe else None,
             zip_has_conf=zip_probe.has_conf if zip_probe else None,
             status=status,

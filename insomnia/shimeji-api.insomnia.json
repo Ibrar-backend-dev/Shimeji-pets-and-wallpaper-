@@ -261,9 +261,9 @@
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/commit",
       "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"items\": [\n    {\n      \"asset_ticket_id\": \"{{ _.asset_ticket_id }}\",\n      \"preview_ticket_id\": null,\n      \"name\": \"Insomnia test asset\",\n      \"premium\": false,\n      \"priority\": 0,\n      \"is_live\": null,\n      \"duration_ms\": null,\n      \"tags\": [\"test\"]\n    }\n  ]\n}"},
+      "body": {"mimeType": "application/json", "text": "{\n  \"items\": [\n    {\n      \"asset_ticket_id\": \"{{ _.asset_ticket_id }}\",\n      \"preview_ticket_id\": null,\n      \"name\": \"Insomnia test asset\",\n      \"premium\": false,\n      \"priority\": 0,\n      \"is_live\": null,\n      \"duration_ms\": null,\n      \"color_code\": \"#0a1b2c\",\n      \"tags\": [\"test\"]\n    }\n  ]\n}"},
       "parameters": [],
-      "description": "Validates the uploaded bytes and creates media items. Set asset_ticket_id only after completing the direct B2 PUT."
+      "description": "Validates the uploaded bytes and creates media items. Set asset_ticket_id only after completing the direct B2 PUT. color_code is supported for Shimeji and Battery items."
     },
     {
       "_id": "__REQUEST_18__",
@@ -285,9 +285,9 @@
       "method": "PATCH",
       "url": "{{ _.admin_api_base_url }}/items/{{ _.item_id }}",
       "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"name\": \"Updated by Insomnia\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_active\": true,\n  \"tags\": [\"test\"]\n}"},
+      "body": {"mimeType": "application/json", "text": "{\n  \"name\": \"Updated by Insomnia\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_active\": true,\n  \"color_code\": \"#0a1b2c\",\n  \"tags\": [\"test\"]\n}"},
       "parameters": [],
-      "description": "Updates editorial fields only; storage details and computed values cannot be changed."
+      "description": "Updates editorial fields only; storage details and computed values cannot be changed. color_code is supported for Shimeji and Battery items."
     },
     {
       "_id": "__REQUEST_20__",
@@ -352,9 +352,9 @@
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches/{{ _.upload_batch_id }}/sessions",
       "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"kind\": \"ASSET\",\n  \"filename\": \"sample.png\",\n  \"content_type\": \"image/png\",\n  \"size\": 123456,\n  \"name\": \"Insomnia multipart test asset\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_live\": null,\n  \"tags\": [\"test\"]\n}"},
+      "body": {"mimeType": "application/json", "text": "{\n  \"kind\": \"ASSET\",\n  \"filename\": \"sample.png\",\n  \"content_type\": \"image/png\",\n  \"size\": 123456,\n  \"name\": \"Insomnia multipart test asset\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_live\": null,\n  \"color_code\": \"#0a1b2c\",\n  \"tags\": [\"test\"]\n}"},
       "parameters": [],
-      "description": "Starts a B2 multipart upload. Save id into multipart_session_id. The size must exactly match the file."
+      "description": "Starts a B2 multipart upload. Save id into multipart_session_id. The size must exactly match the file. color_code is supported for Shimeji and Battery items."
     },
     {
       "_id": "__REQUEST_27__",

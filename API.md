@@ -344,13 +344,15 @@ about all fifty problems in one round trip. `207` means partial, `400` means not
       "priority": 1,
       "is_live": null,
       "duration_ms": null,
+      "color_code": "#0a1b2c",
       "tags": ["anime", "neon"]
     }
   ]
 }
 ```
 
-`is_live: null` derives it from the media type. `preview_ticket_id` is **required** for `VIDEO`
+`is_live: null` derives it from the media type. `color_code` is optional and supported for
+Shimeji and Battery items; omit it to return `null`. `preview_ticket_id` is **required** for `VIDEO`
 (no ffmpeg to derive a poster) and for images above `INLINE_PROCESS_MAX_BYTES`.
 
 ```json
