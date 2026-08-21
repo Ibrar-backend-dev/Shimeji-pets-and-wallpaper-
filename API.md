@@ -150,6 +150,7 @@ a `400` explaining what was wrong, never a silently empty page.
 | `subcategory_id` / `_name` | Both `null` when the item sits directly in its category |
 | `orientation`, `resolution` | Derived from the dimensions at save time and indexed, so they are filterable. `resolution` buckets by the longer edge, so a 2160×3840 portrait is `UHD_4K` |
 | `dominant_color` | Average colour, for a placeholder behind a loading thumbnail. May be `""` |
+| `color_code` | Optional admin-defined `#RRGGBB` colour for Shimeji and Battery items. `null` when not supplied |
 | `duration_ms` | Uploader-declared; there is no ffmpeg on the host to probe it. May be `null` |
 | `priority` | Lower sorts first |
 | `created_at` | Naive UTC with microseconds |
@@ -397,7 +398,7 @@ Each item succeeds or fails on its own — one bad file never discards the good 
 | Method | Path | Notes |
 | --- | --- | --- |
 | POST | `/admin/uploads/abort` | `{"ticket_ids": [...]}` — cancels tickets and deletes any uploaded bytes |
-| PATCH | `/admin/items/{id}` | Editorial fields only: `name`, `premium`, `priority`, `is_live`, `is_active`, `tags`, `subcategory_id` |
+| PATCH | `/admin/items/{id}` | Editorial fields only: `name`, `premium`, `priority`, `is_live`, `is_active`, `color_code`, `tags`, `subcategory_id` |
 | DELETE | `/admin/items/{id}` | Archives (soft delete). Bytes purged after `ARCHIVE_RETENTION_DAYS` |
 
 Storage keys, sizes, checksums, dimensions and status are derived at commit and cannot be

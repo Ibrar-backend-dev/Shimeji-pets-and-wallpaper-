@@ -20,6 +20,7 @@ from apps.ingest import storage
 from apps.ingest.models import TicketStatus, UploadTicket
 
 from .conftest import make_gif, make_jpeg, make_mp4, make_png, make_zip
+from .factories import make_item
 
 pytestmark = pytest.mark.django_db
 
@@ -875,6 +876,21 @@ def test_patch_updates_editorial_fields_only(staff_client, category, subcategory
     assert [t.slug for t in item.tags.all()] == ["dark"]
     assert item.file_key == original_key  # unchanged
     assert item.status == ItemStatus.READY  # unchanged
+
+
+def test_patch_sets_color_code_for_shimeji_item(staff_client, shimeji):
+    category = Category.objects.create(feature=shimeji, name="Packs", priority=1)
+    item = make_item(category=category)
+
+    response = staff_client.patch(
+        reverse("ingest:item-admin", args=[item.id]),
+        data=json.dumps({"color_code": "#0a1b2c"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, response.content
+    item.refresh_from_db()
+    assert item.color_code == "#0a1b2c"
 
 
 def test_patch_rejects_subcategory_from_another_category(staff_client, category, subcategory):

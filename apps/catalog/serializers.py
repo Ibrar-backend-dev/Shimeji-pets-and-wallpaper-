@@ -142,6 +142,7 @@ class MediaItemSerializer(serializers.ModelSerializer):
             "orientation",
             "resolution",
             "dominant_color",
+            "color_code",
             "tags",
             "priority",
             "created_at",

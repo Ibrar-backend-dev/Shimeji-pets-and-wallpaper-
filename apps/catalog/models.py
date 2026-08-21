@@ -63,6 +63,11 @@ _SLUG_VALIDATOR = RegexValidator(
     "Use lowercase letters, digits and single hyphens only.",
 )
 
+_COLOR_CODE_VALIDATOR = RegexValidator(
+    r"^#[0-9a-fA-F]{6}$",
+    "Use a six-digit hexadecimal colour code, for example #1a2b3c.",
+)
+
 
 def derive_orientation(width: int | None, height: int | None) -> str:
     if not width or not height:
@@ -341,6 +346,15 @@ class MediaItem(TimeStampedModel):
     dominant_color = models.CharField(
         max_length=7, blank=True, help_text="Hex like #1a2b3c, for image placeholders."
     )
+    # Editorial display colour. It is intentionally separate from dominant_color,
+    # which is derived from the uploaded image.
+    color_code = models.CharField(  # noqa: DJ001 -- API distinguishes unset from "".
+        max_length=7,
+        null=True,
+        blank=True,
+        validators=[_COLOR_CODE_VALIDATOR],
+        help_text="Optional six-digit hex colour for Shimeji and Battery items.",
+    )
 
     # --- Shimeji zip introspection ---
     zip_entries = models.PositiveIntegerField(null=True, blank=True)
@@ -438,6 +452,17 @@ class MediaItem(TimeStampedModel):
             expected = self.category.feature_id
             if self.feature_id and self.feature_id != expected:
                 raise ValidationError({"feature": "Type must match the category's type."})
+
+        if self.color_code and self.feature_id:
+            feature_slug = self.feature.slug
+            if feature_slug not in {Feature.SHIMEJI, Feature.BATTERY}:
+                raise ValidationError(
+                    {
+                        "color_code": (
+                            "Colour codes are only supported for Shimeji and Battery items."
+                        )
+                    }
+                )
 
     def save(self, *args, **kwargs):
         # Derive rather than trust: `feature` mirrors the category, and the

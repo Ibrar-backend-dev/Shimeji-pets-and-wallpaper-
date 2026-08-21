@@ -112,6 +112,9 @@ class CommitItemSerializer(serializers.Serializer):
     # None means "derive from the media type" — see services._resolve_is_live.
     is_live = serializers.BooleanField(required=False, allow_null=True, default=None)
     duration_ms = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    color_code = serializers.RegexField(
+        r"^#[0-9a-fA-F]{6}$", required=False, allow_null=True, default=None
+    )
     tags = serializers.ListField(
         child=serializers.SlugField(max_length=64), required=False, default=list
     )
@@ -172,6 +175,7 @@ class MediaItemUpdateSerializer(serializers.ModelSerializer):
             "priority",
             "is_live",
             "is_active",
+            "color_code",
             "tags",
             "subcategory_id",
         )

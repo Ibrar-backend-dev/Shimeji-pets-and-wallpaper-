@@ -12,6 +12,7 @@ import re
 import uuid
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.catalog.models import Category, ItemStatus, MediaType
 
@@ -180,6 +181,21 @@ def test_image_url_carries_whatever_the_asset_is(client, auth, shimeji):
     assert payload["image_url"].endswith(".zip")
     assert payload["media_type"] == "ZIP"
     assert payload["is_live"] is True
+
+
+def test_color_code_is_returned_for_shimeji_and_null_when_not_supplied(client, auth, shimeji):
+    category = Category.objects.create(feature=shimeji, name="Colours", priority=1)
+    make_item(category=category, name="default")
+    make_item(category=category, name="pink", color_code="#ff00aa")
+
+    items = client.get("/api/v1/shimeji", **auth).json()["data"]["items"]
+    colors = {item["name"]: item["color_code"] for item in items}
+    assert colors == {"default": None, "pink": "#ff00aa"}
+
+
+def test_color_code_is_restricted_to_shimeji_and_battery(category):
+    with pytest.raises(ValidationError, match="only supported for Shimeji and Battery"):
+        make_item(category=category, color_code="#ff00aa").full_clean()
 
 
 def test_computed_dimension_fields_are_derived_on_save(client, auth, category):

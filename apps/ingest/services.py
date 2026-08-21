@@ -507,6 +507,7 @@ def _commit_single(*, user, spec: dict[str, Any], request=None) -> MediaItem:
             height=probe.height,
             duration_ms=_coerce_optional_int(spec.get("duration_ms")),
             dominant_color=probe.dominant_color,
+            color_code=spec.get("color_code"),
             zip_entries=zip_probe.entries if zip_probe else None,
             zip_has_conf=zip_probe.has_conf if zip_probe else None,
             status=ItemStatus.READY,

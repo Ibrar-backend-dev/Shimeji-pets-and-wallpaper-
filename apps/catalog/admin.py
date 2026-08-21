@@ -207,6 +207,7 @@ class MediaItemAdmin(admin.ModelAdmin):
                     "priority",
                     "is_live",
                     "is_active",
+                    "color_code",
                     "status",
                 )
             },
