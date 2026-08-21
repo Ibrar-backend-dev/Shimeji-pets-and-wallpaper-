@@ -208,8 +208,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(hours=2),
-    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=7),
+    # Admin tokens last one year. Rotate DJANGO_SECRET_KEY to invalidate every
+    # issued token if one is lost or compromised.
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=365),
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=365),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
