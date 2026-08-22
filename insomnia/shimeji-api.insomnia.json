@@ -16,7 +16,7 @@
       "parentId": "__WORKSPACE_ID__",
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:8000",
+        "base_url": "http://192.168.18.8:8000",
         "api_base_url": "{{ _.base_url }}/api/v1",
         "admin_api_base_url": "{{ _.api_base_url }}/admin",
         "admin_v2_api_base_url": "{{ _.base_url }}/api/v2/admin",
@@ -33,12 +33,26 @@
         "multipart_session_id": "00000000-0000-0000-0000-000000000000",
         "preview_multipart_session_id": "",
         "etag": "",
-        "cursor": ""
+        "cursor": "",
+        "upload_url": "",
+        "upload_content_type": "image/png",
+        "part_url": "",
+        "media_key": ""
       },
       "dataPropertyOrder": null,
       "color": null,
       "isPrivate": false,
       "metaSortKey": 0
+    },
+    {
+      "_id": "__ENV_LAN__",
+      "_type": "environment",
+      "parentId": "__BASE_ENVIRONMENT_ID__",
+      "name": "Localhost only",
+      "data": {
+        "base_url": "http://localhost:8000"
+      },
+      "metaSortKey": 1
     },
     {
       "_id": "__FOLDER_1__",
@@ -85,7 +99,12 @@
       "name": "GET Manifest",
       "method": "GET",
       "url": "{{ _.api_base_url }}/manifest",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Bootstrap taxonomy: active content types, categories, subcategories, and counts."
@@ -97,7 +116,12 @@
       "name": "GET Categories (wallpaper)",
       "method": "GET",
       "url": "{{ _.api_base_url }}/categories?type=wallpaper&limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Lists active wallpaper categories. Change type to shimeji or battery as needed."
@@ -109,7 +133,12 @@
       "name": "GET Subcategories",
       "method": "GET",
       "url": "{{ _.api_base_url }}/subcategories?category_id={{ _.category_id }}&limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Lists active subcategories for category_id. Clear category_id and use ?type=wallpaper to list a type."
@@ -121,7 +150,12 @@
       "name": "GET Wallpapers (filtered)",
       "method": "GET",
       "url": "{{ _.api_base_url }}/wallpapers?limit=20&orientation=PORTRAIT&premium=false",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Wallpaper feed. Try category_id, media_type, is_live, tags, q, resolution, ordering, or updated_since filters."
@@ -133,7 +167,12 @@
       "name": "GET Wallpaper detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/wallpapers/{{ _.item_id }}",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Returns one wallpaper. Set item_id from a wallpaper-feed result."
@@ -145,7 +184,12 @@
       "name": "GET Shimeji",
       "method": "GET",
       "url": "{{ _.api_base_url }}/shimeji?limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Paginated Shimeji feed."
@@ -157,7 +201,12 @@
       "name": "GET Shimeji detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/shimeji/{{ _.item_id }}",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Returns one Shimeji item. Set item_id from the Shimeji feed first."
@@ -169,7 +218,12 @@
       "name": "GET Battery",
       "method": "GET",
       "url": "{{ _.api_base_url }}/battery?limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Paginated battery-media feed."
@@ -181,7 +235,12 @@
       "name": "GET Battery detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/battery/{{ _.item_id }}",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Returns one battery item. Set item_id from the battery feed first."
@@ -193,7 +252,12 @@
       "name": "GET Mixed items",
       "method": "GET",
       "url": "{{ _.api_base_url }}/items?type=wallpaper,shimeji,battery&limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Combined feed across types allowed by the API key."
@@ -205,7 +269,12 @@
       "name": "GET Mixed item detail",
       "method": "GET",
       "url": "{{ _.api_base_url }}/items/{{ _.item_id }}",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Returns an allowed item regardless of its content type."
@@ -217,7 +286,12 @@
       "name": "GET Related items",
       "method": "GET",
       "url": "{{ _.api_base_url }}/items/{{ _.item_id }}/related?limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Returns other items in the same subcategory, or the same category where no subcategory exists."
@@ -229,7 +303,16 @@
       "name": "GET Wallpapers with ETag",
       "method": "GET",
       "url": "{{ _.api_base_url }}/wallpapers?limit=20",
-      "headers": [{"name": "X-API-Key", "value": "{{ _.api_key }}"}, {"name": "If-None-Match", "value": "{{ _.etag }}"}],
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ _.api_key }}"
+        },
+        {
+          "name": "If-None-Match",
+          "value": "{{ _.etag }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Conditional GET. Paste the ETag returned by a feed request into etag; a 304 response means nothing changed."
@@ -248,10 +331,42 @@
       "name": "POST Create upload slot",
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/presign",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"type\": \"wallpaper\",\n  \"category_id\": \"{{ _.category_id }}\",\n  \"subcategory_id\": null,\n  \"files\": [\n    {\n      \"filename\": \"sample.png\",\n      \"content_type\": \"image/png\",\n      \"size\": 123456,\n      \"kind\": \"ASSET\"\n    }\n  ]\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"wallpaper\",\n  \"category_id\": \"{{ _.category_id }}\",\n  \"subcategory_id\": null,\n  \"files\": [\n    {\n      \"filename\": \"sample.png\",\n      \"content_type\": \"image/png\",\n      \"size\": 123456,\n      \"kind\": \"ASSET\"\n    }\n  ]\n}"
+      },
       "parameters": [],
-      "description": "Creates presigned B2 PUT slots. The filename, MIME type, and exact size must match the eventual upload."
+      "description": "Creates presigned upload slots. The filename, MIME type and exact size must match the bytes you eventually PUT.\n\nThe returned upload_url points at B2, or at this server's /media/upload/ when MEDIA_LOCAL_STORAGE=True. Either way the next step is the same: copy it into `upload_url` and run 'PUT Upload file bytes'.\n\nKeep the returned ticket id for the commit step."
+    },
+    {
+      "_id": "__REQUEST_UPLOAD_PUT__",
+      "_type": "request",
+      "parentId": "__FOLDER_3__",
+      "name": "PUT Upload file bytes (presigned URL)",
+      "method": "PUT",
+      "url": "{{ _.upload_url }}",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "{{ _.upload_content_type }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/octet-stream",
+        "fileName": ""
+      },
+      "parameters": [],
+      "description": "The step between presign and commit: the actual bytes.\n\nCopy `upload_url` from the presign response into the environment, pick the file under Body, and send.\n\nNo Authorization header on purpose. The URL carries its own authority - a signature with B2, a signed token in local mode - which is why this one request works unchanged against either backend.\n\nContent-Type and Content-Length are both bound into that signature, so the file must be EXACTLY the size declared at presign and of the declared type. A mismatch is rejected: 403 from B2, 400 locally. That is deliberate, not a bug.\n\nSet `upload_content_type` to match the presigned MIME type."
     },
     {
       "_id": "__REQUEST_17__",
@@ -260,10 +375,22 @@
       "name": "POST Commit uploaded file",
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/commit",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"items\": [\n    {\n      \"asset_ticket_id\": \"{{ _.asset_ticket_id }}\",\n      \"preview_ticket_id\": null,\n      \"name\": \"Insomnia test asset\",\n      \"premium\": false,\n      \"priority\": 0,\n      \"is_live\": null,\n      \"duration_ms\": null,\n      \"color_code\": \"#0a1b2c\",\n      \"tags\": [\"test\"]\n    }\n  ]\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"items\": [\n    {\n      \"asset_ticket_id\": \"{{ _.asset_ticket_id }}\",\n      \"preview_ticket_id\": null,\n      \"name\": \"Insomnia test asset\",\n      \"premium\": false,\n      \"priority\": 0,\n      \"is_live\": null,\n      \"duration_ms\": null,\n      \"color_code\": \"#0a1b2c\",\n      \"tags\": [\"test\"]\n    }\n  ]\n}"
+      },
       "parameters": [],
-      "description": "Validates the uploaded bytes and creates media items. Set asset_ticket_id only after completing the direct B2 PUT. color_code is supported for Shimeji and Battery items."
+      "description": "Validates the uploaded bytes and creates media items.\n\nSet asset_ticket_id only AFTER the PUT has succeeded - commit re-reads the stored object and re-derives its type, size and dimensions, so it fails if the bytes are not actually there.\n\ncolor_code is supported for Shimeji and Battery items."
     },
     {
       "_id": "__REQUEST_18__",
@@ -272,8 +399,20 @@
       "name": "POST Abort upload slots",
       "method": "POST",
       "url": "{{ _.admin_api_base_url }}/uploads/abort",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"ticket_ids\": [\"{{ _.asset_ticket_id }}\"]\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ticket_ids\": [\"{{ _.asset_ticket_id }}\"]\n}"
+      },
       "parameters": [],
       "description": "Cancels unused upload tickets and removes any uploaded bytes."
     },
@@ -284,8 +423,20 @@
       "name": "PATCH Media item",
       "method": "PATCH",
       "url": "{{ _.admin_api_base_url }}/items/{{ _.item_id }}",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"name\": \"Updated by Insomnia\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_active\": true,\n  \"color_code\": \"#0a1b2c\",\n  \"tags\": [\"test\"]\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Updated by Insomnia\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_active\": true,\n  \"color_code\": \"#0a1b2c\",\n  \"tags\": [\"test\"]\n}"
+      },
       "parameters": [],
       "description": "Updates editorial fields only; storage details and computed values cannot be changed. color_code is supported for Shimeji and Battery items."
     },
@@ -296,7 +447,12 @@
       "name": "DELETE Media item (archive)",
       "method": "DELETE",
       "url": "{{ _.admin_api_base_url }}/items/{{ _.item_id }}",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Archives an item (soft delete). Stored bytes are purged later by the orphan reaper."
@@ -315,7 +471,12 @@
       "name": "GET Upload batches (v2)",
       "method": "GET",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches?active=true",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Lists the current staff user's active, resumable upload batches."
@@ -327,8 +488,20 @@
       "name": "POST Create upload batch (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"type\": \"wallpaper\",\n  \"category_id\": \"{{ _.category_id }}\",\n  \"subcategory_id\": null,\n  \"publish_mode\": \"DRAFT\"\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"wallpaper\",\n  \"category_id\": \"{{ _.category_id }}\",\n  \"subcategory_id\": null,\n  \"publish_mode\": \"DRAFT\"\n}"
+      },
       "parameters": [],
       "description": "Create a durable upload batch. Save data.id into upload_batch_id. Use IMMEDIATE to publish automatically on finalize."
     },
@@ -339,7 +512,12 @@
       "name": "GET Upload batch (v2)",
       "method": "GET",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches/{{ _.upload_batch_id }}",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Returns the batch with all sessions and finalized items."
@@ -351,8 +529,20 @@
       "name": "POST Create asset session (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches/{{ _.upload_batch_id }}/sessions",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"kind\": \"ASSET\",\n  \"filename\": \"sample.png\",\n  \"content_type\": \"image/png\",\n  \"size\": 123456,\n  \"name\": \"Insomnia multipart test asset\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_live\": null,\n  \"color_code\": \"#0a1b2c\",\n  \"tags\": [\"test\"]\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"kind\": \"ASSET\",\n  \"filename\": \"sample.png\",\n  \"content_type\": \"image/png\",\n  \"size\": 123456,\n  \"name\": \"Insomnia multipart test asset\",\n  \"premium\": false,\n  \"priority\": 0,\n  \"is_live\": null,\n  \"color_code\": \"#0a1b2c\",\n  \"tags\": [\"test\"]\n}"
+      },
       "parameters": [],
       "description": "Starts a B2 multipart upload. Save id into multipart_session_id. The size must exactly match the file. color_code is supported for Shimeji and Battery items."
     },
@@ -363,7 +553,12 @@
       "name": "GET Uploaded parts (v2)",
       "method": "GET",
       "url": "{{ _.admin_v2_api_base_url }}/multipart-sessions/{{ _.multipart_session_id }}/parts",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Checks B2 for completed parts, so an uploader can resume safely after a reload."
@@ -375,10 +570,37 @@
       "name": "POST Request part URLs (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/multipart-sessions/{{ _.multipart_session_id }}/part-urls",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"part_numbers\": [1]\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"part_numbers\": [1]\n}"
+      },
       "parameters": [],
       "description": "Request short-lived B2 PUT URLs for missing parts. PUT the appropriate byte range to each returned upload_url before completing."
+    },
+    {
+      "_id": "__REQUEST_PART_PUT__",
+      "_type": "request",
+      "parentId": "__FOLDER_4__",
+      "name": "PUT Upload one part (presigned URL)",
+      "method": "PUT",
+      "url": "{{ _.part_url }}",
+      "headers": [],
+      "body": {
+        "mimeType": "application/octet-stream",
+        "fileName": ""
+      },
+      "parameters": [],
+      "description": "Uploads a single part. Copy one URL from the part-urls response into `part_url`.\n\nKeep the ETag from the response header: 'Complete multipart upload' needs every part's number and ETag, and it sorts by PartNumber rather than trusting the order you send.\n\nEvery part except the last must be exactly MULTIPART_PART_SIZE_BYTES (10 MiB by default). A short part in the middle corrupts the assembled file without failing here."
     },
     {
       "_id": "__REQUEST_29__",
@@ -387,7 +609,12 @@
       "name": "POST Complete multipart upload (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/multipart-sessions/{{ _.multipart_session_id }}/complete",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Completes the upload only after every expected B2 part exists."
@@ -399,8 +626,20 @@
       "name": "POST Finalize media item (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/multipart-sessions/{{ _.multipart_session_id }}/finalize",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"preview_session_id\": null\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"preview_session_id\": null\n}"
+      },
       "parameters": [],
       "description": "Validates the actual stored bytes and creates a PENDING or READY media item. Provide a completed preview session for video or large images."
     },
@@ -411,8 +650,20 @@
       "name": "POST Publish draft batch (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches/{{ _.upload_batch_id }}/publish",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}, {"name": "Content-Type", "value": "application/json"}],
-      "body": {"mimeType": "application/json", "text": "{\n  \"item_ids\": []\n}"},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"item_ids\": []\n}"
+      },
       "parameters": [],
       "description": "Publishes every pending item in this draft batch. Supply item_ids to publish only selected items."
     },
@@ -423,7 +674,12 @@
       "name": "POST Abort upload batch (v2)",
       "method": "POST",
       "url": "{{ _.admin_v2_api_base_url }}/upload-batches/{{ _.upload_batch_id }}/abort",
-      "headers": [{"name": "Authorization", "value": "Bearer {{ _.staff_jwt }}"}],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.staff_jwt }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Cancels unfinished multipart sessions in this batch. Do not use after finalizing media you want to keep."
@@ -442,7 +698,12 @@
       "name": "POST Reap orphans (dry run)",
       "method": "POST",
       "url": "{{ _.internal_base_url }}/cron/reap-orphans?dry_run=1&limit=100",
-      "headers": [{"name": "X-Cron-Secret", "value": "{{ _.cron_secret }}"}],
+      "headers": [
+        {
+          "name": "X-Cron-Secret",
+          "value": "{{ _.cron_secret }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Reports abandoned upload tickets and expired archived media without deleting anything. Remove dry_run=1 to perform cleanup."
@@ -454,10 +715,34 @@
       "name": "POST Reconcile counts (dry run)",
       "method": "POST",
       "url": "{{ _.internal_base_url }}/cron/reconcile-counts?dry_run=1",
-      "headers": [{"name": "X-Cron-Secret", "value": "{{ _.cron_secret }}"}],
+      "headers": [
+        {
+          "name": "X-Cron-Secret",
+          "value": "{{ _.cron_secret }}"
+        }
+      ],
       "body": {},
       "parameters": [],
       "description": "Reports category/subcategory count corrections without persisting them. Remove dry_run=1 to reconcile counts."
+    },
+    {
+      "_id": "__FOLDER_6__",
+      "_type": "request_group",
+      "parentId": "__WORKSPACE_ID__",
+      "name": "06 - Local media (MEDIA_LOCAL_STORAGE only)",
+      "description": "These routes exist only while MEDIA_LOCAL_STORAGE=True. With B2 they are not mounted at all and every request here returns 404."
+    },
+    {
+      "_id": "__REQUEST_MEDIA_GET__",
+      "_type": "request",
+      "parentId": "__FOLDER_6__",
+      "name": "GET Stored media file",
+      "method": "GET",
+      "url": "{{ _.base_url }}/media/{{ _.media_key }}",
+      "headers": [],
+      "body": {},
+      "parameters": [],
+      "description": "Serves a stored object, standing in for the CDN.\n\n`media_key` is the slug-based object key, e.g.\n  battery/neon/assets/2026/08/<uuid>.png\n\nNote the key stays slug-based even though the folder on disk is 'battery emoji' - the friendly name is a filesystem detail and never appears in a key or URL."
     }
   ]
 }
