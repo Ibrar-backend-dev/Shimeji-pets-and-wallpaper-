@@ -98,7 +98,27 @@ class Command(BaseCommand):
         # --- storage ------------------------------------------------------- #
         from apps.ingest import storage
 
-        if not storage.is_configured():
+        # Local storage is a development affordance. On a real deployment the
+        # bytes would sit on the instance's own disk: lost on redeploy, absent
+        # from any CDN, and invisible to a second instance. That is an error,
+        # not a preference.
+        if settings.MEDIA_LOCAL_STORAGE:
+            message = (
+                "MEDIA_LOCAL_STORAGE is on, so uploads are written to this "
+                f"machine's disk ({settings.LOCAL_MEDIA_ROOT}) instead of B2. "
+                "They will not survive a redeploy and are not served by a CDN."
+            )
+            (warnings if settings.DEBUG else problems).append(message)
+            if not settings.LOCAL_MEDIA_ORIGIN:
+                problems.append(
+                    "LOCAL_MEDIA_ORIGIN is unset, so upload and media URLs "
+                    "would be built with no host."
+                )
+            else:
+                self.stdout.write(
+                    self.style.WARNING(f"  storage: LOCAL ({settings.LOCAL_MEDIA_ROOT})")
+                )
+        elif not storage.is_configured():
             message = (
                 "B2 is not configured (B2_KEY_ID, B2_APPLICATION_KEY, "
                 "B2_BUCKET_NAME, B2_ENDPOINT_URL). Uploads will fail."
@@ -111,7 +131,11 @@ class Command(BaseCommand):
             else:
                 problems.append(f"B2 bucket is not reachable (status: {health}).")
 
-        if not settings.MEDIA_CDN_BASE_URL:
+        # In local mode public_url is built from LOCAL_MEDIA_ORIGIN, so the CDN
+        # host is genuinely unused and demanding one would be noise.
+        if settings.MEDIA_LOCAL_STORAGE:
+            pass
+        elif not settings.MEDIA_CDN_BASE_URL:
             (warnings if settings.DEBUG else problems).append(
                 "MEDIA_CDN_BASE_URL is unset, so every image_url would be empty."
             )

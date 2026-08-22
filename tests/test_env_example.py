@@ -46,7 +46,7 @@ INT_VARS = [
     "API_CONFIG_CACHE_SECONDS",
     "APP_CLIENT_TOUCH_INTERVAL_SECONDS",
 ]
-BOOL_VARS = ["DJANGO_DEBUG", "LOG_JSON"]
+BOOL_VARS = ["DJANGO_DEBUG", "LOG_JSON", "MEDIA_LOCAL_STORAGE"]
 LIST_VARS = ["DJANGO_ALLOWED_HOSTS", "DJANGO_CSRF_TRUSTED_ORIGINS"]
 
 
@@ -232,6 +232,22 @@ def test_suite_ignores_the_developers_database_url(monkeypatch):
 
     assert "sqlite" in module.DATABASES["default"]["ENGINE"]
     assert "production.example.com" not in str(module.DATABASES)
+
+
+def test_suite_never_runs_against_local_media_storage():
+    """
+    The suite must exercise the B2 path, which is what production runs.
+
+    MEDIA_LOCAL_STORAGE lives in .env, so without the pin in test.py a developer
+    who enabled it locally would run the whole suite against the filesystem
+    backend and never touch the moto-mocked S3 code — a green run that proves
+    nothing about the code that ships.
+    """
+    from django.conf import settings
+
+    assert settings.MEDIA_LOCAL_STORAGE is False, (
+        "test.py must pin MEDIA_LOCAL_STORAGE=False rather than inherit it from .env"
+    )
 
 
 def test_suite_never_uses_a_shared_cache():

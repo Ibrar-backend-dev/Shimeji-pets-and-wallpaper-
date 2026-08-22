@@ -62,6 +62,14 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # --------------------------------------------------------------------------- #
 # Storage — fake credentials; moto intercepts every call
 # --------------------------------------------------------------------------- #
+
+# Pinned for the same reason as DATABASES and CACHES above: base.py reads .env,
+# so a developer who has switched their own machine to local media storage would
+# otherwise run the entire suite against the filesystem backend — silently not
+# testing the B2 path that actually ships. Tests that want the local backend opt
+# in with override_settings.
+MEDIA_LOCAL_STORAGE = False
+
 B2_KEY_ID = "testing"
 B2_APPLICATION_KEY = "testing"
 B2_BUCKET_NAME = "test-bucket"

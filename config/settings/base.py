@@ -247,6 +247,37 @@ B2_REGION = env("B2_REGION", default="us-west-004")
 MEDIA_CDN_BASE_URL = env("MEDIA_CDN_BASE_URL", default="").rstrip("/")
 
 # --------------------------------------------------------------------------- #
+# Local media storage (development only)
+# --------------------------------------------------------------------------- #
+# True stores uploads on this machine's disk under LOCAL_MEDIA_ROOT and serves
+# them from Django; False sends them to B2. The switch is read at call time, so
+# every storage.* function follows it without any caller knowing which is live.
+#
+# This exists so a laptop, a phone on the LAN, or CI can exercise the whole
+# upload path without B2 credentials, a public bucket or a CDN host.
+# check_deploy refuses to pass with this on outside DEBUG.
+MEDIA_LOCAL_STORAGE = env.bool("MEDIA_LOCAL_STORAGE", default=False)
+
+LOCAL_MEDIA_ROOT = env("LOCAL_MEDIA_ROOT", default=str(BASE_DIR / "media"))
+
+# Origin the *client* uses to reach this server — not necessarily localhost.
+# A phone on the same Wi-Fi needs the LAN address here, because upload and
+# media URLs are handed to the client and resolved on its side, not ours.
+LOCAL_MEDIA_ORIGIN = env("LOCAL_MEDIA_ORIGIN", default="http://localhost:8000").rstrip("/")
+
+# On-disk folder name per feature slug, for local storage only.
+#
+# Object keys stay slug-based in the database, in B2 and in URLs — they are an
+# interface, and renaming them would be a data migration. This affects nothing
+# but the directory you browse to, so `media/battery emoji/` is readable where
+# `media/battery/` is not. A slug absent from this map uses itself.
+LOCAL_MEDIA_FEATURE_DIRS = {
+    "shimeji": "shimeiji animation",
+    "wallpaper": "wallpaper",
+    "battery": "battery emoji",
+}
+
+# --------------------------------------------------------------------------- #
 # Upload policy
 # --------------------------------------------------------------------------- #
 PRESIGN_EXPIRY_SECONDS = env.int("PRESIGN_EXPIRY_SECONDS", default=900)

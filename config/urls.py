@@ -21,6 +21,20 @@ urlpatterns = [
     path("internal/", include("apps.core.urls")),
 ]
 
+# Local media: the upload target and the serve route that stand in for B2 and
+# the CDN. Mounted only when the flag is on, so a production deployment has no
+# route to them at all — the views re-check the flag anyway, but not mounting
+# them is the stronger guarantee.
+if settings.MEDIA_LOCAL_STORAGE:
+    from apps.ingest import views_media
+
+    urlpatterns += [
+        path("media/upload/", views_media.upload_object, name="local-media-upload"),
+        path("media/upload-part/", views_media.upload_part, name="local-media-upload-part"),
+        # <path:key> so the slashes inside an object key survive routing.
+        path("media/<path:key>", views_media.serve_media, name="local-media-serve"),
+    ]
+
 if settings.DEBUG:
     try:
         import debug_toolbar  # noqa: F401

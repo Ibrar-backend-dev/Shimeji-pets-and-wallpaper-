@@ -16,6 +16,7 @@ Two rules shape everything here:
 
 from __future__ import annotations
 
+import functools
 import logging
 import re
 import threading
@@ -52,6 +53,31 @@ class ObjectMeta:
     last_modified: datetime | None
 
 
+def _dispatches(func):
+    """
+    Route this call to `local_storage` when MEDIA_LOCAL_STORAGE is on.
+
+    One rule in one place, rather than the same flag check at the top of fifteen
+    functions — and it leaves each body below readable as plain B2 code.
+
+    Two details matter. The import is lazy because local_storage imports
+    StorageError and ObjectMeta from this module, and a top-level import here
+    would close that cycle. The flag is read per call, not cached, so a test
+    using `override_settings` actually switches backends.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if getattr(settings, "MEDIA_LOCAL_STORAGE", False):
+            from . import local_storage
+
+            return getattr(local_storage, func.__name__)(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@_dispatches
 def is_configured() -> bool:
     return bool(
         settings.B2_KEY_ID
@@ -151,6 +177,7 @@ def build_object_key(
     return f"{feature_slug}/{category_slug}/{kind}/{now:%Y}/{now:%m}/{unique_id}.{ext}"
 
 
+@_dispatches
 def public_url(key: str) -> str:
     """
     Build the CDN URL for a key.
@@ -171,6 +198,7 @@ def public_url(key: str) -> str:
 # --------------------------------------------------------------------------- #
 
 
+@_dispatches
 def presign_put(
     *, key: str, content_type: str, content_length: int, expires_in: int | None = None
 ) -> tuple[str, dict[str, str]]:
@@ -209,6 +237,7 @@ def presign_put(
     return url, {"Content-Type": content_type, "Content-Length": str(content_length)}
 
 
+@_dispatches
 def create_multipart_upload(*, key: str, content_type: str) -> str:
     try:
         response = get_client().create_multipart_upload(
@@ -219,6 +248,7 @@ def create_multipart_upload(*, key: str, content_type: str) -> str:
         raise StorageError("Could not start multipart upload.") from exc
 
 
+@_dispatches
 def presign_upload_part(*, key: str, upload_id: str, part_number: int) -> str:
     try:
         return get_client().generate_presigned_url(
@@ -236,6 +266,7 @@ def presign_upload_part(*, key: str, upload_id: str, part_number: int) -> str:
         raise StorageError("Could not presign upload part.") from exc
 
 
+@_dispatches
 def list_multipart_parts(*, key: str, upload_id: str) -> list[dict]:
     try:
         paginator = get_client().get_paginator("list_parts")
@@ -249,6 +280,7 @@ def list_multipart_parts(*, key: str, upload_id: str) -> list[dict]:
         raise StorageError("Could not list uploaded parts.") from exc
 
 
+@_dispatches
 def complete_multipart_upload(*, key: str, upload_id: str, parts: list[dict]) -> ObjectMeta:
     try:
         get_client().complete_multipart_upload(
@@ -262,6 +294,7 @@ def complete_multipart_upload(*, key: str, upload_id: str, parts: list[dict]) ->
     return head_object(key)
 
 
+@_dispatches
 def abort_multipart_upload(*, key: str, upload_id: str) -> bool:
     try:
         get_client().abort_multipart_upload(
@@ -276,6 +309,7 @@ def abort_multipart_upload(*, key: str, upload_id: str) -> bool:
         return False
 
 
+@_dispatches
 def head_object(key: str) -> ObjectMeta:
     """Fetch object metadata. Raises ObjectNotFound if it is not there."""
     client = get_client()
@@ -302,6 +336,7 @@ def head_object(key: str) -> ObjectMeta:
     )
 
 
+@_dispatches
 def get_range(key: str, start: int = 0, length: int = 4096) -> bytes:
     """
     Read a byte range.
@@ -328,6 +363,7 @@ def get_range(key: str, start: int = 0, length: int = 4096) -> bytes:
         raise StorageError("Could not reach storage.") from exc
 
 
+@_dispatches
 def get_object_bytes(key: str, max_bytes: int) -> bytes:
     """
     Download a whole object, refusing anything over max_bytes.
@@ -343,6 +379,7 @@ def get_object_bytes(key: str, max_bytes: int) -> bytes:
     return get_range(key, 0, meta.size)
 
 
+@_dispatches
 def put_bytes(*, key: str, data: bytes, content_type: str) -> ObjectMeta:
     """Upload a small server-generated object, i.e. a Pillow-made preview."""
     client = get_client()
@@ -369,6 +406,7 @@ def put_bytes(*, key: str, data: bytes, content_type: str) -> ObjectMeta:
     )
 
 
+@_dispatches
 def delete_object(key: str) -> bool:
     """
     Delete one object. Returns False instead of raising, so a reaper sweeping
@@ -387,6 +425,7 @@ def delete_object(key: str) -> bool:
         return False
 
 
+@_dispatches
 def storage_health() -> str:
     """Return "ok", "error", or "unconfigured" for the readiness probe."""
     if not is_configured():
